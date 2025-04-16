@@ -41,7 +41,7 @@ class OtplessFlutterHeadless: FlutterPlugin, MethodCallHandler, ActivityAware, A
   private var otplessJob: Job? = null
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "otpless_flutter")
+    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "otpless_headless_flutter")
     channel.setMethodCallHandler(this)
     context = flutterPluginBinding.applicationContext
   }
