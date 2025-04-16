@@ -8,7 +8,7 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
     private var otplessTask: Task<Void, Never>? = nil
     
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "otpless_flutter", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(name: "otpless_headless_flutter", binaryMessenger: registrar.messenger())
         let instance = SwiftOtplessFlutterHeadless()
         registrar.addMethodCallDelegate(instance, channel: channel)
         ChannelManager.shared.setMethodChannel(channel)
