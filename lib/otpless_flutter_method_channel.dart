@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:otpless_headless_flutter/models.dart';
 
 import 'otpless_flutter_platform_interface.dart';
 
@@ -39,12 +40,12 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
   Future<void> start(
       OtplessResultCallback callback, Map<String, dynamic> jsonObject) async {
     _callback = callback;
-    await methodChannel
-        .invokeMethod("start", {'arg': json.encode(jsonObject)});
+    await methodChannel.invokeMethod("start", {'arg': json.encode(jsonObject)});
   }
 
   Future<void> initialize(String appid, double timeout) async {
-    await methodChannel.invokeMethod("initialize", {'appId': appid, 'timeout': timeout});
+    await methodChannel
+        .invokeMethod("initialize", {'appId': appid, 'timeout': timeout});
   }
 
   Future<void> setResponseCallback(OtplessResultCallback callback) async {
@@ -52,11 +53,20 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     await methodChannel.invokeMethod("setResponseCallback");
   }
 
-  Future<void> enableDebugLogging(bool isEnabled) async {
-    await methodChannel.invokeMethod("enableDebugLogging", {'arg': isEnabled});
+  Future<void> setDevLogging(bool isEnabled) async {
+    await methodChannel.invokeMethod("setDevLogging", {'isEnabled': isEnabled});
   }
 
   Future<void> commitResponse(final dynamic response) async {
-    await methodChannel.invokeMethod("commitResponse", { "response": response });
+    await methodChannel.invokeMethod("commitResponse", {"response": response});
+  }
+
+  Future<bool> initTrueCaller(final OtplessTruecallerRequest? request) async {
+    if (request != null) {
+      return await methodChannel
+          .invokeMethod("initTrueCaller", {"request": request.toMap()});
+    } else {
+      return await methodChannel.invokeMethod("initTrueCaller");
+    }
   }
 }

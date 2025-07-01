@@ -22,8 +22,7 @@ class _MyAppState extends State<MyApp> {
   final _otplessHeadlessPlugin = Otpless();
   var loaderVisibility = true;
   bool isSimStateListenerAttached = false;
-  final TextEditingController phoneController =
-      TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController otpController = TextEditingController();
   String channel = "WHATSAPP";
@@ -36,17 +35,17 @@ class _MyAppState extends State<MyApp> {
   String otpLength = "";
   String expiry = "";
 
-  String appId = "od6f3sjgcp93605da5om";
+  String appId = "L5IRV1551YZ9KU9VZFAS";
 
   @override
   void initState() {
     super.initState();
-      _otplessHeadlessPlugin.initialize(appId, timeout: 23);
-      _otplessHeadlessPlugin.setResponseCallback(onHeadlessResult);
+    _otplessHeadlessPlugin.initialize(appId, timeout: 23);
+    _otplessHeadlessPlugin.setDevLogging(true);
+    _otplessHeadlessPlugin.setResponseCallback(onHeadlessResult);
   }
 
   Future<void> startHeadlessForPhoneAndEmail() async {
-
     Map<String, dynamic> arg = {};
     if (phone.isNotEmpty) {
       arg["phone"] = phone;
@@ -77,6 +76,9 @@ class _MyAppState extends State<MyApp> {
   }
 
   void onHeadlessResult(dynamic result) {
+    if (result['responseType'] == 'SDK_READY' && result['statusCode'] == 200) {
+      initTrueCaller();
+    }
     setState(() {
       _dataResponse = jsonEncode(result);
       _otplessHeadlessPlugin.commitResponse(result);
@@ -87,6 +89,11 @@ class _MyAppState extends State<MyApp> {
         otp = _otp;
       }
     });
+  }
+
+  Future<void> initTrueCaller() async {
+    bool isInit = await _otplessHeadlessPlugin.initTrueCaller(null);
+    print("init truecaller result: $isInit");
   }
 
   @override
@@ -166,7 +173,8 @@ class _MyAppState extends State<MyApp> {
                           onChanged: (value) {
                             deliveryChannel = value;
                           },
-                          decoration: const InputDecoration(hintText: "Delivery Channel"),
+                          decoration: const InputDecoration(
+                              hintText: "Delivery Channel"),
                         ),
                       ),
                       const SizedBox(width: 5),
@@ -175,7 +183,8 @@ class _MyAppState extends State<MyApp> {
                           onChanged: (value) {
                             otpLength = value;
                           },
-                          decoration: const InputDecoration(hintText: "OTP length"),
+                          decoration:
+                              const InputDecoration(hintText: "OTP length"),
                           keyboardType: TextInputType.number,
                         ),
                       ),
