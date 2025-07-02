@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +34,9 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
   }
 
   Future<bool> isWhatsAppInstalled() async {
+    if (!Platform.isAndroid) {
+      return false;
+    }
     final isInstalled = await methodChannel.invokeMethod("isWhatsAppInstalled");
     return isInstalled as bool;
   }
@@ -62,6 +66,9 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
   }
 
   Future<bool> initTrueCaller(final OtplessTruecallerRequest? request) async {
+    if (!Platform.isAndroid) {
+      return false;
+    }
     if (request != null) {
       return await methodChannel
           .invokeMethod("initTrueCaller", {"request": request.toMap()});

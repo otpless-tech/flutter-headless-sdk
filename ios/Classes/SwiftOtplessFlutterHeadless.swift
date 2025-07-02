@@ -16,8 +16,6 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "isWhatsAppInstalled":
-            return
         case "start":
             let args = call.arguments as! [String: Any]
             let jsonString = args["arg"] as! String
@@ -27,8 +25,8 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             return
         case "initialize":
             guard let viewController = UIApplication.shared.delegate?.window??.rootViewController else {return}
-              let args = call.arguments as! [String: Any]
-              let appId = args["appId"] as! String
+            let args = call.arguments as! [String: Any]
+            let appId = args["appId"] as! String
             Otpless.shared.initialise(withAppId: appId, vc: viewController)
             return
         case "setResponseCallback":
@@ -39,6 +37,12 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             return
         case "cleanup":
             cleanup()
+        case "setDevLogging":
+            let args = call.arguments as! [String: Any]
+            if let isEnabled = args["isEnabled"] as? Bool, isEnabled {
+                Otpless.shared.setLoggerDelegate(self)
+            }
+            break;
         default:
             return
         }
@@ -178,4 +182,5 @@ class ChannelManager {
         methodChannel?.invokeMethod(method, arguments: arguments)
     }
 }
+
 

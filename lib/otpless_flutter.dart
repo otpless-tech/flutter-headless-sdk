@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/models.dart';
@@ -10,7 +12,7 @@ class Otpless {
     return OtplessFlutterPlatform.instance.getPlatformVersion();
   }
 
-  Future<bool> isWhatsAppInstalled() async {
+  Future<bool> isWhatsAppInstalledForAndroid() async {
     return _otplessChannel.isWhatsAppInstalled();
   }
 
