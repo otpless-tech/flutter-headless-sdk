@@ -2,8 +2,8 @@ PODS:
   - Flutter (1.0.0)
   - otpless_headless_flutter (0.0.1):
     - Flutter
-    - OtplessBM/Core (= 1.1.1)
-  - OtplessBM/Core (1.1.1)
+    - OtplessBM/Core (= 1.1.6)
+  - OtplessBM/Core (1.1.6)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -20,10 +20,10 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/otpless_headless_flutter/ios"
 
 SPEC CHECKSUMS:
-  Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  otpless_headless_flutter: d07129c5a499dcdebc67dae4adcaf59f74963b4a
-  OtplessBM: a3fd650326c6390afff30982cc9d9df67a800bfc
+  Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
+  otpless_headless_flutter: efd375b6ca152ae611930afaf8c68b19d91d15ed
+  OtplessBM: a12c79514c3c0e92272311613df58614db8b7221
 
 PODFILE CHECKSUM: c4c93c5f6502fe2754f48404d3594bf779584011
 
-COCOAPODS: 1.13.0
+COCOAPODS: 1.16.2

@@ -48,7 +48,9 @@ internal fun parseOtplessTruecallerRequest(call: MethodCall): Pair<OtplessTrueca
     }
     val trueCallerConfig: OtplessTruecallerRequest = dartRequest["config"]?.let {
         if (it is Map<*, Any?>) {
-            val map = it.mapNotNull { (key, value) -> if (key is String && value != null) key to value else null }.toMap()
+            val map =
+                it.mapNotNull { (key, value) -> if (key is String && value != null) key to value else null }
+                    .toMap()
             parseTrueCallerConfig(map)
         } else OtplessTruecallerRequest()
     } ?: OtplessTruecallerRequest()
@@ -74,7 +76,11 @@ fun parseTrueCallerConfig(map: Map<String, Any>): OtplessTruecallerRequest {
         shape = (map["shape"] as? String)?.let { safeEnumValueOf<OTButtonShape>(it) },
         verifyOption = (map["verifyOption"] as? String)?.let { safeEnumValueOf<OTVerifyOption>(it) },
         heading = (map["heading"] as? String)?.let { safeEnumValueOf<OTHeadingConsent>(it) },
-        loginPrefixText = (map["loginPrefixText"] as? String)?.let { safeEnumValueOf<OTLoginPrefixText>(it) },
+        loginPrefixText = (map["loginPrefixText"] as? String)?.let {
+            safeEnumValueOf<OTLoginPrefixText>(
+                it
+            )
+        },
         ctaText = (map["ctaText"] as? String)?.let { safeEnumValueOf<OTCtaText>(it) },
         locale = (map["locale"] as? String)?.let { parseLocale(it) },
         buttonColor = (map["buttonColor"] as? String)?.let { parseHexColor(it) },
@@ -91,8 +97,14 @@ internal fun parseHexColor(hex: String) = try {
 }
 
 internal fun parseLocale(str: String): Locale? = try {
-    val list = str.split("-")
-    Locale(list[0], list[1])
+    // locale can be send with dash(-) and underscore(_)
+    var list = str.split("-")
+    if (list.size != 2) {
+        list = str.split("_")
+    }
+    if (list.size == 2) {
+        Locale(list[0], list[1])
+    } else null
 } catch (ex: Exception) {
     null
 }

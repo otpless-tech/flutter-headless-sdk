@@ -12,7 +12,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/otpless-tech/flutter-headless-sdk.git'
   s.license          = { :type => 'MIT', :file => '../LICENSE' }
   s.author           = { 'Otpless' => 'developer@otpless.com' }
-  s.source           = { :git => 'https://github.com/otpless-tech/otpless-headless-iOS-sdk.git', :tag => s.version.to_s }
+  s.source           = { :git => 'https://github.com/otpless-tech/flutter-headless-sdk.git', :tag => s.version.to_s }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
   s.dependency 'OtplessBM/Core', '1.1.6'
