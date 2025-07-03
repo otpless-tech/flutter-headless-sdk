@@ -214,6 +214,8 @@ Add the following block to your ios/Runner/info.plist file (Only required if you
 </dict>
 ```
 
+</br>
+</br>
 
 # Note
 
