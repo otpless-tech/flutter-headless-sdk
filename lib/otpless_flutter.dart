@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
+import 'package:otpless_headless_flutter/models.dart';
 
 class Otpless {
   final MethodChannelOtplessFlutter _otplessChannel =
@@ -9,7 +12,7 @@ class Otpless {
     return OtplessFlutterPlatform.instance.getPlatformVersion();
   }
 
-  Future<bool> isWhatsAppInstalled() async {
+  Future<bool> isWhatsAppInstalledForAndroid() async {
     return _otplessChannel.isWhatsAppInstalled();
   }
 
@@ -29,11 +32,15 @@ class Otpless {
     _otplessChannel.setResponseCallback(callback);
   }
 
-  Future<void> enableDebugLogging(bool isDebugLoggingEnabled) async {
-    _otplessChannel.enableDebugLogging(isDebugLoggingEnabled);
+  Future<void> setDevLogging(bool isEnabled) async {
+    _otplessChannel.setDevLogging(isEnabled);
   }
 
   Future<void> commitResponse(final dynamic response) async {
     return await _otplessChannel.commitResponse(response);
+  }
+
+  Future<bool> initTrueCaller(final OtplessTruecallerRequest? request) async {
+    return await _otplessChannel.initTrueCaller(request);
   }
 }
