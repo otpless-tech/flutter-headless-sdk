@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
   String otpLength = "";
   String expiry = "";
 
-  String appId = "L5IRV1551YZ9KU9VZFAS";
+  String appId = "your_client_id";
 
   @override
   void initState() {

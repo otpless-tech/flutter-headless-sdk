@@ -2,14 +2,9 @@ package com.otpless.headlessflutter
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
-import androidx.annotation.NonNull
 import androidx.fragment.app.FragmentActivity
 import com.otpless.longclaw.tc.OTScopeRequest
-import com.otpless.v2.android.sdk.dto.OtplessChannelType
-import com.otpless.v2.android.sdk.dto.OtplessRequest
 import com.otpless.v2.android.sdk.dto.OtplessResponse
-import com.otpless.v2.android.sdk.dto.ResponseTypes
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -40,34 +35,13 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     private lateinit var activity: WeakReference<FragmentActivity>
     private var otplessJob: Job? = null
 
-    override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "otpless_headless_flutter")
         channel.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
     }
 
-    override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-        // safe check
-        fun parseJsonArg(): JSONObject {
-            val jsonString = call.argument<String>("arg")
-            val jsonObject = if (jsonString != null) {
-                try {
-                    Log.d(Tag, "arg: $jsonString")
-                    JSONObject(jsonString)
-                } catch (ex: Exception) {
-                    Log.d(Tag, "wrong json object is passed. error ${ex.message}")
-                    ex.printStackTrace()
-                    null
-                }
-            } else {
-                Log.d(Tag, "No json object is passed.")
-                null
-            }
-            if (jsonObject == null) {
-                throw Exception("json argument not provided")
-            }
-            return jsonObject
-        }
+    override fun onMethodCall(call: MethodCall, result: Result) {
         when (call.method) {
             "isWhatsAppInstalled" -> {
                 activity.get()?.let {
@@ -79,7 +53,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
             "start" -> {
                 result.success("")
-                start(parseJsonArg())
+                start(call.parseJsonArg())
             }
 
             "initialize" -> {
@@ -127,30 +101,12 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
         }
     }
 
-    private fun convertMapToOtplessResponse(response: Map<String, Any>): OtplessResponse? {
-        if (response.isEmpty()) return null
-        try {
-            val responseType = response["responseType"].toString()
-            val responseJson = JSONObject(response["response"] as Map<String, Any>)
-            val statusCode = response["statusCode"].toString().softParseStatusCode()
-
-            return OtplessResponse(
-                ResponseTypes.valueOf(responseType),
-                responseJson,
-                statusCode
-            )
-        } catch (_: Exception) {
-            return null
-        }
-    }
-
     private fun onOtplessResponseCallback(otplessResponse: OtplessResponse) {
         channel.invokeMethod("otpless_callback_event", convertHeadlessResponseToJson(otplessResponse).toString())
     }
 
     private fun start(json: JSONObject) {
-        val request = parseRequest(json)
-
+        val request = parseJsonToOtplessRequest(json)
         if (request.hasOtp()) {
             otplessJob = CoroutineScope(Dispatchers.IO).launch {
                 OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
@@ -163,60 +119,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
         }
     }
 
-    private fun parseRequest(json: JSONObject): OtplessRequest {
-        val otplessRequest = OtplessRequest()
-        // check for phone
-        val phone = json.optString("phone")
-        if (phone.isNotEmpty()) {
-            val countryCode = json.getString("countryCode")
-            otplessRequest.setPhoneNumber(number = phone, countryCode = countryCode)
-            val otp = json.optString("otp")
-            if (otp.isNotEmpty()) {
-                otplessRequest.setOtp(otp)
-            }
-        } else {
-            // check for email
-            val email = json.optString("email")
-            // check for otp in case of phone and email
-            if (email.isNotEmpty()) {
-                otplessRequest.setEmail(email)
-                val otp = json.optString("otp")
-                if (otp.isNotEmpty()) {
-                    otplessRequest.setOtp(otp)
-                }
-            } else {
-                // check for channel type
-                val channelType = json.getString("channelType")
-                otplessRequest.setChannelType(OtplessChannelType.values().first { it.channelTypeName == channelType })
-            }
-        }
-        json.optString("otpLength").let {
-            otplessRequest.setOtpLength(it)
-        }
-        json.optString("expiry").let {
-            otplessRequest.setExpiry(it)
-        }
-
-        json.optString("tid").let {
-            otplessRequest.setTemplateId(it)
-        }
-
-        val dChannelStr: String = json.optString("deliveryChannel")
-        otplessRequest.setDeliveryChannel(dChannelStr)
-        return otplessRequest
-    }
-
-    private fun String.softParseStatusCode(): Int {
-        if (this.isEmpty()) return -1000
-        return try {
-            this.toInt()
-        } catch (e: NumberFormatException) {
-            -1000
-        }
-    }
-
-
-    override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
     }
 
@@ -243,13 +146,8 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
         return
     }
 
-    companion object {
-        private const val Tag = "OtplessFlutterHeadless"
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         OtplessSDK.onActivityResult(requestCode, resultCode, data)
         return true
     }
-
 }
