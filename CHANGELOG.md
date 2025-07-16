@@ -1,3 +1,13 @@
+## 1.0.3 (16th July 2025)
+
+### Android
+- Updated `otpless-headless-sdk` to `v0.3.1`
+- Added support for **SNA only** mode
+
+### iOS
+- Updated `OtplessBM` to `v1.1.7`
+- Added support for **SNA only** mode
+
 ## 1.0.2 (3rd July 2025)
 #### Feature
 * truecaller support
