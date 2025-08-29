@@ -40,7 +40,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:host="otpless"
-                    android:scheme= "otpless.plhf5jtg1pm9n1n9tyao"/>
+                    android:scheme= "otpless.app_id_in_lowercase"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
