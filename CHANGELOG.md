@@ -1,4 +1,15 @@
+## 1.0.4 (29th August 2025)
+### Android
+- 
+
 ## 1.0.3 (16th July 2025)
+### Android
+- Updated `otpless-headless-sdk` to `v0.3.4`
+- isSdkReady support
+
+### iOS
+- Updated `OtplessBM` to `v2.0.0`
+- isSdkReady support
 
 ### Android
 - Updated `otpless-headless-sdk` to `v0.3.1`
