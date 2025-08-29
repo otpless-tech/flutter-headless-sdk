@@ -76,4 +76,8 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
       return await methodChannel.invokeMethod("initTrueCaller");
     }
   }
+
+  Future<bool> isSdkReady() async {
+    return await methodChannel.invokeMethod("isSdkReady");
+  }
 }

@@ -95,6 +95,10 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 result.success(isInit)
             }
 
+            "isSdkReady" -> {
+                result.success(OtplessSDK.isSdkReady)
+            }
+
             else -> {
                 result.notImplemented()
             }

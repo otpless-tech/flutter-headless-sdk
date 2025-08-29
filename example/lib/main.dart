@@ -71,6 +71,10 @@ class _MyAppState extends State<MyApp> {
     if (expiry.isNotEmpty) {
       arg["expiry"] = expiry;
     }
+    final bool isSdkReady = await _otplessHeadlessPlugin.isSdkReady();
+    setState(() {
+      _dataResponse = "isSdkReady: $isSdkReady";
+    });
 
     _otplessHeadlessPlugin.start(onHeadlessResult, arg);
   }
