@@ -43,6 +43,9 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
                 Otpless.shared.setLoggerDelegate(self)
             }
             break;
+        case "isSdkReady":
+            result(Otpless.shared.isSdkReady())
+            break
         default:
             return
         }

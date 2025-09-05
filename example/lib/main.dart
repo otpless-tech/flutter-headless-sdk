@@ -35,7 +35,7 @@ class _MyAppState extends State<MyApp> {
   String otpLength = "";
   String expiry = "";
 
-  String appId = "your_client_id";
+  String appId = "app_id_in_lowercase";
 
   @override
   void initState() {
@@ -71,6 +71,10 @@ class _MyAppState extends State<MyApp> {
     if (expiry.isNotEmpty) {
       arg["expiry"] = expiry;
     }
+    final bool isSdkReady = await _otplessHeadlessPlugin.isSdkReady();
+    setState(() {
+      _dataResponse = "isSdkReady: $isSdkReady";
+    });
 
     _otplessHeadlessPlugin.start(onHeadlessResult, arg);
   }

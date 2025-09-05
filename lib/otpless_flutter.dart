@@ -43,4 +43,8 @@ class Otpless {
   Future<bool> initTrueCaller(final OtplessTruecallerRequest? request) async {
     return await _otplessChannel.initTrueCaller(request);
   }
+
+  Future<bool> isSdkReady() async {
+    return await _otplessChannel.isSdkReady();
+  }
 }
