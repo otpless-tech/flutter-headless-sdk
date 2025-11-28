@@ -1,6 +1,6 @@
 name: otpless_headless_flutter
 description: Standalone SDK for Otpless Headless functionality.
-version: 1.0.4
+version: 1.0.5
 homepage: https://github.com/otpless-tech/flutter-headless-sdk.git
 
 environment:
