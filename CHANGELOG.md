@@ -1,3 +1,9 @@
+## 1.0.5 (28th November 2025)
+### Android
+- Update `otpless-headless-sdk` to `v0.3.8`
+- Update Truecaller low memory fix
+
+
 ## 1.0.4 (29th August 2025)
 ### Android
 - Updated `otpless-headless-sdk` to `v0.3.4`
