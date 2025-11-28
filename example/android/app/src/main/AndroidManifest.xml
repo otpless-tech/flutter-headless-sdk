@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
    <application
         android:label="Flutter Headless"
-        android:name="${applicationName}"
-       android:networkSecurityConfig="@xml/otpless_network_security_config"
+        android:name=".FlutterApplication"
+
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
