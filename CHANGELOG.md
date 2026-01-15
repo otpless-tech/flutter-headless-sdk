@@ -1,3 +1,10 @@
+## 1.0.6 (15th Jan 2026)
+### Android
+- Update `otpless-headless-sdk` to `v0.6.3`
+- Passkey support
+- Background auth support
+- Airtel and Vi support
+
 ## 1.0.5 (28th November 2025)
 ### Android
 - Update `otpless-headless-sdk` to `v0.3.8`
