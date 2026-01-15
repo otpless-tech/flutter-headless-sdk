@@ -146,7 +146,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     private fun startBackground(json: JSONObject, result: Result) {
         otplessJob?.cancel()
         activity.get()?.let { activity ->
-            activity.lifecycleScope.launch(Dispatchers.IO) {
+            otplessJob = activity.lifecycleScope.launch(Dispatchers.IO) {
                 result.success(OtplessSDK.start(parseToOtplessAuthConfig(json)))
             }
         }
