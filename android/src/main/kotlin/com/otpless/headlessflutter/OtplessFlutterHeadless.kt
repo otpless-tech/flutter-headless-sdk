@@ -2,9 +2,13 @@ package com.otpless.headlessflutter
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.otpless.longclaw.tc.OTScopeRequest
+import com.otpless.v2.android.sdk.dto.AuthEvent
 import com.otpless.v2.android.sdk.dto.OtplessResponse
+import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -52,20 +56,25 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
             }
 
             "start" -> {
-                result.success("")
+                result.success(null)
                 start(call.parseJsonArg())
             }
 
             "initialize" -> {
                 val appId = call.argument<String>("appId") ?: ""
                 val loginUri = call.argument<String>("loginUri")
-                result.success("")
-                val mActivity = activity.get() ?: return
-                OtplessSDK.initialize(appId = appId, activity = mActivity, loginUri = loginUri)
+
+                val mActivity = activity.get() ?: return run {
+                    result.error("0", "init called before activity is attached", null)
+                }
+                result.success(null)
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    OtplessSDK.initialize(appId = appId, activity = mActivity, loginUri = loginUri, this@OtplessFlutterHeadless::onOtplessResponseCallback)
+                }
             }
 
             "setResponseCallback" -> {
-                result.success("")
+                result.success(null)
                 OtplessSDK.setResponseCallback(this::onOtplessResponseCallback)
             }
 
@@ -99,6 +108,16 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 result.success(OtplessSDK.isSdkReady)
             }
 
+            "startBackground" -> {
+                startBackground(call.parseJsonArg(), result)
+            }
+
+            "closeDialogIfOpen" -> {
+                OtplessSDK.closeDialogIfOpen()
+            }
+
+            "userAuthEvent" -> sendUserAuthEvent(call, result)
+
             else -> {
                 result.notImplemented()
             }
@@ -110,15 +129,25 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     }
 
     private fun start(json: JSONObject) {
+        val fa = activity.get() ?: return
         val request = parseJsonToOtplessRequest(json)
         if (request.hasOtp()) {
-            otplessJob = CoroutineScope(Dispatchers.IO).launch {
+            otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
                 OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
             }
         } else {
             otplessJob?.cancel()
-            otplessJob = CoroutineScope(Dispatchers.IO).launch {
+            otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
                 OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
+            }
+        }
+    }
+
+    private fun startBackground(json: JSONObject, result: Result) {
+        otplessJob?.cancel()
+        activity.get()?.let { activity ->
+            activity.lifecycleScope.launch(Dispatchers.IO) {
+                result.success(OtplessSDK.start(parseToOtplessAuthConfig(json)))
             }
         }
     }
@@ -153,5 +182,32 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         OtplessSDK.onActivityResult(requestCode, resultCode, data)
         return true
+    }
+
+    private fun sendUserAuthEvent(call: MethodCall, result: Result) {
+        val event = safeEnumValueOf<AuthEvent>(call.argument<String>("event"))
+        val fallback = call.argument<Boolean>("fallback")
+        val providerType = safeEnumValueOf<ProviderType>(call.argument<String>("providerType"))
+        if (event == null || fallback == null || providerType == null) {
+            result.success(false)
+            return
+        }
+        val providerInfo: Map<String, String> = call.argument<String>("providerInfo")?.let { str ->
+            val json = try {
+                JSONObject(str)
+            } catch (_: Exception) {
+                JSONObject()
+            }
+            val info = mutableMapOf<String, String>()
+            val keySet = json.keys()
+            for (key in keySet) {
+                val value = json.optString(key)
+                if (value.isEmpty()) continue
+                info[key] = value
+            }
+            info
+        } ?: emptyMap()
+        OtplessSDK.userAuthEvent(event, fallback, providerType, providerInfo)
+        result.success(true)
     }
 }

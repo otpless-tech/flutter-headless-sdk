@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:otpless_headless_flutter/models.dart';
 import 'dart:async';
 
 import 'package:otpless_headless_flutter/otpless_flutter.dart';
@@ -55,7 +56,6 @@ class _MyAppState extends State<MyApp> {
     } else {
       arg["channelType"] = channel.toUpperCase();
     }
-
     // arg["tid"] = "";
 
     if (otp.isNotEmpty) {
@@ -73,10 +73,19 @@ class _MyAppState extends State<MyApp> {
     }
     final bool isSdkReady = await _otplessHeadlessPlugin.isSdkReady();
     setState(() {
-      _dataResponse = "isSdkReady: $isSdkReady";
+      _dataResponse = "$_dataResponse\n\nisSdkReady: $isSdkReady";
     });
 
     _otplessHeadlessPlugin.start(onHeadlessResult, arg);
+  }
+
+  Future<void> startForegroundAuth() async {
+    final config = OtplessAuthConfig(true, otp: otp);
+    final hasBg =
+        await _otplessHeadlessPlugin.startBackground(onHeadlessResult, config);
+    setState(() {
+      _dataResponse = "$_dataResponse\n\nisSdkReady: $hasBg";
+    });
   }
 
   void onHeadlessResult(dynamic result) {
@@ -84,13 +93,21 @@ class _MyAppState extends State<MyApp> {
       initTrueCaller();
     }
     setState(() {
-      _dataResponse = jsonEncode(result);
+      final newEntry = jsonEncode(result);
+      _dataResponse = "$_dataResponse\n\n$newEntry";
       _otplessHeadlessPlugin.commitResponse(result);
       String responseType = result["responseType"];
       if (responseType == "OTP_AUTO_READ") {
         String _otp = result["response"]["otp"];
         otpController.text = _otp;
         otp = _otp;
+      } else if (responseType == "ONETAP") {
+        final providerInfo = {
+          "timestamp": DateTime.now().millisecondsSinceEpoch
+        };
+        _otplessHeadlessPlugin.sendUserAuthEvent(
+            AuthEvent.authSuccess, false, ProviderType.otpless,
+            providerInfo: providerInfo);
       }
     });
   }
@@ -209,6 +226,11 @@ class _MyAppState extends State<MyApp> {
                   CupertinoButton.filled(
                     onPressed: startHeadlessForPhoneAndEmail,
                     child: const Text("Start"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: startForegroundAuth,
+                    child: const Text("Start Foreground"),
                   ),
                   const SizedBox(height: 16),
                   // response view

@@ -45,4 +45,17 @@ class Otpless {
   Future<bool> isSdkReady() async {
     return await _otplessChannel.isSdkReady();
   }
+
+  Future<bool> startBackground(
+      OtplessResultCallback callback, OtplessAuthConfig config) async {
+    return await _otplessChannel.startBackground(callback, config);
+  }
+
+  Future<bool> sendUserAuthEvent(
+      AuthEvent event, bool fallback, ProviderType providerType,
+      {Map<String, dynamic>? providerInfo}) async {
+    return await _otplessChannel.sendUserAuthEvent(
+        event, fallback, providerType,
+        providerInfo: providerInfo);
+  }
 }

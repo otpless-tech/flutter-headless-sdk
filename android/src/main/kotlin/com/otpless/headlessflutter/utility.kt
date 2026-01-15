@@ -11,10 +11,12 @@ import com.otpless.longclaw.tc.OTLoginPrefixText
 import com.otpless.longclaw.tc.OTScope
 import com.otpless.longclaw.tc.OTVerifyOption
 import com.otpless.longclaw.tc.OtplessTruecallerRequest
+import com.otpless.v2.android.sdk.dto.AuthEvent
 import com.otpless.v2.android.sdk.dto.OtplessChannelType
 import com.otpless.v2.android.sdk.dto.OtplessRequest
 import com.otpless.v2.android.sdk.dto.OtplessResponse
 import com.otpless.v2.android.sdk.dto.ResponseTypes
+import com.otpless.v2.android.sdk.view.models.OtplessAuthConfig
 import io.flutter.plugin.common.MethodCall
 import org.json.JSONObject
 import java.util.Locale
@@ -64,6 +66,11 @@ internal fun parseJsonToOtplessRequest(json: JSONObject): OtplessRequest {
     val dChannelStr: String = json.optString("deliveryChannel")
     otplessRequest.setDeliveryChannel(dChannelStr)
     return otplessRequest
+}
+
+internal fun parseToOtplessAuthConfig(json: JSONObject): OtplessAuthConfig {
+    val isForeground = json.optBoolean("isForeground", false)
+    return OtplessAuthConfig(isForeground, json.optString("otp"), json.optString("tid").takeIf { it.isNotEmpty() })
 }
 
 /// convert response map object into otpless response

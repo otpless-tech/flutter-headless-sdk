@@ -80,4 +80,23 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
   Future<bool> isSdkReady() async {
     return await methodChannel.invokeMethod("isSdkReady");
   }
+
+  Future<bool> startBackground(
+      OtplessResultCallback callback, OtplessAuthConfig config) async {
+    if (!Platform.isAndroid) return false;
+    return await methodChannel
+        .invokeMethod("startBackground", {'arg': json.encode(config.toMap())});
+  }
+
+  Future<bool> sendUserAuthEvent(
+      AuthEvent event, bool fallback, ProviderType providerType,
+      {Map<String, dynamic>? providerInfo}) async {
+    if (!Platform.isAndroid) return false;
+    return await methodChannel.invokeMethod("userAuthEvent", {
+      "event": event.name,
+      "fallback": fallback,
+      "providerType": providerType.name,
+      if (providerInfo == null) "providerInfo": json.encode(providerInfo)
+    });
+  }
 }
