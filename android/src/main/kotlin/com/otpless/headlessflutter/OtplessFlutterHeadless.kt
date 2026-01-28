@@ -99,8 +99,20 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 val activityContext = activity.get() ?: return kotlin.run { result.success(false) }
                 activityContext.lifecycleScope.launch(Dispatchers.IO) {
                     val request = parseOtplessTruecallerRequest(call)
-                    val isInit = OtplessSDK.initTrueCaller(activityContext, request.first) {
-                        OTScopeRequest.ActivityRequest(activityContext, request.second)
+                    val isInit = try {
+                        OtplessSDK.initTrueCaller(activityContext, request.first) {
+                            OTScopeRequest.ActivityRequest(activityContext, request.second)
+                        }
+                    } catch (ex: Exception) {
+                        // log the exception to event
+                        OtplessSDK.userAuthEvent(
+                            AuthEvent.AUTH_FAILED, false,
+                            ProviderType.OTPLESS, mapOf(
+                                "error" to "truecaller_init_failed",
+                                "errorMessage" to (ex.message ?: "Something went wrong on truecaller init")
+                            )
+                        )
+                        false
                     }
                     result.success(isInit)
                 }
