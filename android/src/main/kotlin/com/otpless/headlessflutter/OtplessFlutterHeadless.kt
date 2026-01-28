@@ -105,13 +105,11 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                         }
                     } catch (ex: Exception) {
                         // log the exception to event
-                        OtplessSDK.userAuthEvent(
-                            AuthEvent.AUTH_FAILED, false,
-                            ProviderType.OTPLESS, mapOf(
-                                "error" to "truecaller_init_failed",
-                                "errorMessage" to (ex.message ?: "Something went wrong on truecaller init")
-                            )
+                        val providerInfo = mapOf(
+                            "error" to "truecaller_init_failed",
+                            "errorMessage" to (ex.message ?: "Something went wrong on truecaller init")
                         )
+                        OtplessSDK.userAuthEvent(AuthEvent.AUTH_FAILED, false, ProviderType.OTPLESS, providerInfo)
                         false
                     }
                     result.success(isInit)
