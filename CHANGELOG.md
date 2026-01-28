@@ -1,3 +1,8 @@
+## 1.0.7 (28th Jan 2026)
+### Andriod
+- [fix] Truecaller initialization switched to io thread
+
+
 ## 1.0.6 (15th Jan 2026)
 ### Android
 - Update `otpless-headless-sdk` to `v0.6.3`
