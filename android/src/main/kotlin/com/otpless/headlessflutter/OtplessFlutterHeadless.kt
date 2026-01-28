@@ -97,11 +97,13 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
             "initTrueCaller" -> {
                 val activityContext = activity.get() ?: return kotlin.run { result.success(false) }
-                val request = parseOtplessTruecallerRequest(call)
-                val isInit = OtplessSDK.initTrueCaller(activityContext, request.first) {
-                    OTScopeRequest.ActivityRequest(activityContext, request.second)
+                activityContext.lifecycleScope.launch(Dispatchers.IO) {
+                    val request = parseOtplessTruecallerRequest(call)
+                    val isInit = OtplessSDK.initTrueCaller(activityContext, request.first) {
+                        OTScopeRequest.ActivityRequest(activityContext, request.second)
+                    }
+                    result.success(isInit)
                 }
-                result.success(isInit)
             }
 
             "isSdkReady" -> {
