@@ -175,7 +175,11 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     }
 
     override fun onNewIntent(intent: Intent): Boolean {
-        OtplessSDK.onNewIntentAsync(intent)
+        activity.get()?.let { activity ->
+            activity.lifecycleScope.launch(Dispatchers.IO) {
+                OtplessSDK.onNewIntent(intent)
+            }
+        }
         return true
     }
 

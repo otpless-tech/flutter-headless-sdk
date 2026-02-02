@@ -1,3 +1,8 @@
+## 1.0.8 (2nd Feb 2026)
+### iOS
+- [feat] Airtel and Vi Support
+
+
 ## 1.0.7 (28th Jan 2026)
 ### Andriod
 - [fix] Truecaller initialization switched to io thread
