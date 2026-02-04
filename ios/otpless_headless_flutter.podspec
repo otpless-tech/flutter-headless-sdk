@@ -15,8 +15,8 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/otpless-tech/flutter-headless-sdk.git', :tag => s.version.to_s }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.dependency 'OtplessBM/Core', '2.0.7'
+  s.dependency 'OtplessBM/Core', '2.0.8'
   s.ios.deployment_target = '13.0'
 
-  s.swift_versions = ['5.5']
+  s.swift_versions = ['5.5', '5.6', '5.7', '5.8', '5.9']
 end
