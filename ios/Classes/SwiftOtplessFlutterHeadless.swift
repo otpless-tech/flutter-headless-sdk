@@ -11,10 +11,20 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
         let channel = FlutterMethodChannel(name: "otpless_headless_flutter", binaryMessenger: registrar.messenger())
         let instance = SwiftOtplessFlutterHeadless()
         registrar.addMethodCallDelegate(instance, channel: channel)
-        ChannelManager.shared.setMethodChannel(channel)
+        Task { @MainActor in
+            ChannelManager.shared.setMethodChannel(channel)
+        }
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        Task { @MainActor [weak self] in
+            guard let self = self else {return}
+            self.handleOnMainThread(call, result: result)
+        }
+    }
+    
+    @MainActor
+    private func handleOnMainThread(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "start":
             let args = call.arguments as! [String: Any]
@@ -22,30 +32,30 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             let data = jsonString.data(using: .utf8)!
             let arguments: [String: String] = try! JSONSerialization.jsonObject(with: data, options: []) as! [String: String]
             start(withDict: arguments)
-            return
+            result(nil)
         case "initialize":
             guard let viewController = UIApplication.shared.delegate?.window??.rootViewController else {return}
             let args = call.arguments as! [String: Any]
             let appId = args["appId"] as! String
             Otpless.shared.initialise(withAppId: appId, vc: viewController)
-            return
+            result(nil)
         case "setResponseCallback":
             Otpless.shared.setResponseDelegate(self)
-            return
+            result(nil)
         case "commitResponse":
             Otpless.shared.commitOtplessResponse(convertDictionaryToOtplessResponse(call.arguments as? [String: Any]))
-            return
+            result(nil)
         case "cleanup":
             cleanup()
+            result(nil)
         case "setDevLogging":
             let args = call.arguments as! [String: Any]
             if let isEnabled = args["isEnabled"] as? Bool, isEnabled {
                 Otpless.shared.setLoggerDelegate(self)
             }
-            break;
+            result(nil)
         case "isSdkReady":
             result(Otpless.shared.isSdkReady())
-            break
         default:
             return
         }
@@ -141,8 +151,6 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
         }
         return nil
     }
-    
-    
 }
 
 extension SwiftOtplessFlutterHeadless: OtplessResponseDelegate {
@@ -152,14 +160,11 @@ extension SwiftOtplessFlutterHeadless: OtplessResponseDelegate {
             "responseType": response.responseType.rawValue,
             "response": response.response
         ]
-        
         let jsonData = try? JSONSerialization.data(withJSONObject: flutterResponse, options: [])
-        
         guard let jsonData else {
             print("Failed to parse JSON data")
             return
         }
-        
         ChannelManager.shared.invokeMethod(method: "otpless_callback_event", arguments: String(data: jsonData, encoding: .utf8))
     }
 }
@@ -170,6 +175,7 @@ extension SwiftOtplessFlutterHeadless: OtplessLoggerDelegate {
     }
 }
 
+@MainActor
 class ChannelManager {
     static let shared = ChannelManager()
     

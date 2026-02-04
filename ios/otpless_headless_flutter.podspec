@@ -18,5 +18,5 @@ Pod::Spec.new do |s|
   s.dependency 'OtplessBM/Core', '2.0.8'
   s.ios.deployment_target = '13.0'
 
-  s.swift_versions = ['5.5']
+  s.swift_versions = ['5.5', '5.6', '5.7', '5.8', '5.9']
 end
