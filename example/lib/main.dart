@@ -84,7 +84,7 @@ class _MyAppState extends State<MyApp> {
     final hasBg =
         await _otplessHeadlessPlugin.startBackground(onHeadlessResult, config);
     setState(() {
-      _dataResponse = "$_dataResponse\n\nisSdkReady: $hasBg";
+      _dataResponse = "$_dataResponse\n\nhasForeground: $hasBg";
     });
   }
 
