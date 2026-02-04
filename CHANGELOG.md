@@ -1,3 +1,7 @@
+## 1.0.9 (5th Feb 2026)
+### iOS
+- [fix] OtplessBM updated to 2.0.8 for actor fix
+
 ## 1.0.8 (2nd Feb 2026)
 ### iOS
 - [feat] Airtel and Vi Support
