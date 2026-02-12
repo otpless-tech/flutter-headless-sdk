@@ -1,3 +1,8 @@
+## 1.1.0 (12th Feb 2026)
+### Android
+- [fix] security exception and mutex fix
+- [fix] android sdk update 0.6.6
+
 ## 1.0.9 (5th Feb 2026)
 ### iOS
 - [fix] OtplessBM updated to 2.0.8 for actor fix
