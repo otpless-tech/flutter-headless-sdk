@@ -1,3 +1,7 @@
+## 1.1.1 (19th Jun 2026)
+### iOS
+- [fix] SceneDelegate support in `initialize` root VC lookup
+
 ## 1.1.0 (12th Feb 2026)
 ### Android
 - [fix] security exception and mutex fix
