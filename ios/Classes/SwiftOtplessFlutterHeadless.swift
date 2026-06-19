@@ -34,9 +34,12 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             start(withDict: arguments)
             result(nil)
         case "initialize":
-            guard let viewController = UIApplication.shared.delegate?.window??.rootViewController else {return}
             let args = call.arguments as! [String: Any]
             let appId = args["appId"] as! String
+            guard let viewController = Self.rootViewController() else {
+                result(nil)
+                return
+            }
             Otpless.shared.initialise(withAppId: appId, vc: viewController)
             result(nil)
         case "setResponseCallback":
@@ -129,6 +132,23 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
         return otplessRequest
     }
     
+    @MainActor
+    private static func rootViewController() -> UIViewController? {
+        // SceneDelegate apps (iOS 13+)
+        if let vc = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .flatMap({ $0.windows })
+            .first(where: { $0.isKeyWindow })?.rootViewController {
+            return vc
+        }
+
+        // AppDelegate-only apps (legacy / no SceneDelegate)
+        if let vc = (UIApplication.shared.delegate as? FlutterAppDelegate)?.window?.rootViewController {
+            return vc
+        }
+        return UIApplication.shared.delegate?.window??.rootViewController
+    }
+
     static func filterParamsCondition(_ call: FlutterMethodCall, on onHaving: ([String: Any]) -> Void, off onNotHaving: () -> Void) {
         if let args = call.arguments as? [String: Any] {
             if let jsonString = args["arg"] as? String {
