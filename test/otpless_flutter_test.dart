@@ -13,6 +13,8 @@ class MockOtplessFlutterPlatform
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   final OtplessFlutterPlatform initialPlatform = OtplessFlutterPlatform.instance;
 
   test('$MethodChannelOtplessFlutter is the default instance', () {
