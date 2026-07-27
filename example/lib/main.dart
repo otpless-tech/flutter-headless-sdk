@@ -82,9 +82,23 @@ class _MyAppState extends State<MyApp> {
   Future<void> startForegroundAuth() async {
     final config = OtplessAuthConfig(true, otp: otp);
     final hasBg =
-        await _otplessHeadlessPlugin.startBackground(onHeadlessResult, config);
+        await _otplessHeadlessPlugin.startOnetap(onHeadlessResult, config);
     setState(() {
       _dataResponse = "$_dataResponse\n\nhasForeground: $hasBg";
+    });
+  }
+
+  Future<void> toggleMfa(bool enabled) async {
+    await _otplessHeadlessPlugin.setMfaEnabled(enabled);
+    setState(() {
+      _dataResponse = "$_dataResponse\n\nMFA enabled: $enabled";
+    });
+  }
+
+  Future<void> printActiveSession() async {
+    final session = await _otplessHeadlessPlugin.getActiveSession();
+    setState(() {
+      _dataResponse = "$_dataResponse\n\nactive session: $session";
     });
   }
 
@@ -230,7 +244,30 @@ class _MyAppState extends State<MyApp> {
                   const SizedBox(height: 16),
                   CupertinoButton.tinted(
                     onPressed: startForegroundAuth,
-                    child: const Text("Start Foreground"),
+                    child: const Text("Start OneTap"),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CupertinoButton.tinted(
+                          onPressed: () => toggleMfa(true),
+                          child: const Text("MFA on"),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: CupertinoButton.tinted(
+                          onPressed: () => toggleMfa(false),
+                          child: const Text("MFA off"),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: printActiveSession,
+                    child: const Text("Active session"),
                   ),
                   const SizedBox(height: 16),
                   // response view
