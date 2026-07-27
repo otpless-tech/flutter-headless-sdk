@@ -14,7 +14,7 @@ abstract class OtplessFlutterPlatform extends PlatformInterface {
   ///
   /// Defaults to [MethodChannelOtplessFlutter].
   static OtplessFlutterPlatform get instance => _instance;
-  
+
   /// Platform-specific implementations should set this with their own
   /// platform-specific class that extends [OtplessFlutterPlatform] when
   /// they register themselves.
