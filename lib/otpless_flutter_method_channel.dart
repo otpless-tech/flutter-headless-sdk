@@ -81,22 +81,78 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     return await methodChannel.invokeMethod("isSdkReady");
   }
 
-  Future<bool> startBackground(
+  Future<bool> startOnetap(
       OtplessResultCallback callback, OtplessAuthConfig config) async {
-    if (!Platform.isAndroid) return false;
-    return await methodChannel
-        .invokeMethod("startBackground", {'arg': json.encode(config.toMap())});
+    _callback = callback;
+    final res = await methodChannel
+        .invokeMethod("startOnetap", {'arg': json.encode(config.toMap())});
+    return (res as bool?) ?? false;
+  }
+
+  Future<void> startInBackground(
+      OtplessResultCallback callback, Map<String, dynamic> jsonObject) async {
+    if (!Platform.isAndroid) return;
+    _callback = callback;
+    await methodChannel
+        .invokeMethod("startInBackground", {'arg': json.encode(jsonObject)});
   }
 
   Future<bool> sendUserAuthEvent(
       AuthEvent event, bool fallback, ProviderType providerType,
       {Map<String, dynamic>? providerInfo}) async {
-    if (!Platform.isAndroid) return false;
-    return await methodChannel.invokeMethod("userAuthEvent", {
+    final res = await methodChannel.invokeMethod("userAuthEvent", {
       "event": event.name,
       "fallback": fallback,
       "providerType": providerType.name,
-      if (providerInfo == null) "providerInfo": json.encode(providerInfo)
+      if (providerInfo != null) "providerInfo": json.encode(providerInfo),
     });
+    return (res as bool?) ?? false;
+  }
+
+  Future<void> setDeviceFingerprintMode(DeviceFingerprintMode mode) async {
+    await methodChannel
+        .invokeMethod("setDeviceFingerprintMode", {'mode': mode.name});
+  }
+
+  Future<void> setMfaEnabled(bool enabled) async {
+    await methodChannel.invokeMethod("setMfaEnabled", {'enabled': enabled});
+  }
+
+  Future<void> initSession(String appId) async {
+    await methodChannel.invokeMethod("initSession", {'appId': appId});
+  }
+
+  Future<Map<String, dynamic>> getActiveSession() async {
+    final raw = await methodChannel.invokeMethod("getActiveSession");
+    if (raw is Map) {
+      return Map<String, dynamic>.from(raw);
+    }
+    return {'isActive': false};
+  }
+
+  Future<void> logoutSession() async {
+    await methodChannel.invokeMethod("logoutSession");
+  }
+
+  Future<void> closeDialogIfOpen() async {
+    if (!Platform.isAndroid) return;
+    await methodChannel.invokeMethod("closeDialogIfOpen");
+  }
+
+  Future<bool> checkSimBindingStatus() async {
+    if (!Platform.isAndroid) return false;
+    final res = await methodChannel.invokeMethod("checkSimBindingStatus");
+    return (res as bool?) ?? false;
+  }
+
+  Future<void> clearSimBinding() async {
+    if (!Platform.isAndroid) return;
+    await methodChannel.invokeMethod("clearSimBinding");
+  }
+
+  Future<void> setSimBindingEnabled(bool enabled) async {
+    if (!Platform.isAndroid) return;
+    await methodChannel
+        .invokeMethod("setSimBindingEnabled", {'enabled': enabled});
   }
 }
