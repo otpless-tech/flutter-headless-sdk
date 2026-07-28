@@ -1,0 +1,38 @@
+version: 2
+
+# Constitution-justified scope (see CLAUDE.md article 5):
+#
+#  * pub  — the plugin has only two runtime deps (flutter, plugin_platform_interface)
+#           by design. Dev-dependency updates are welcome; runtime ones get scrutiny.
+#  * gradle — the ANDROID NATIVE PIN IS DELIBERATELY IGNORED below. Bumping
+#           `otpless-headless-sdk` is a merchant-visible release-train decision
+#           driven by the hub's rule 3 and the bump-native-sdk skill, not by a
+#           bot: it requires diffing the upstream API goldens and rebuilding the
+#           example app. Same reasoning as the iOS pin, which CocoaPods/Dependabot
+#           does not manage here at all.
+#  * github-actions — all actions are SHA-pinned; this is how they get updated.
+
+updates:
+  - package-ecosystem: pub
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "dart"]
+
+  - package-ecosystem: gradle
+    directory: "/android"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "android"]
+    ignore:
+      # Merchant-visible native pin — owned by the bump-native-sdk skill.
+      - dependency-name: "io.github.otpless-tech:otpless-headless-sdk"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "ci"]

@@ -1,0 +1,50 @@
+name: Docs Verify
+
+# Mechanical (non-LLM) fact-check between docs/SDK-GUIDE.md / CHANGELOG.md and
+# the actual plugin source: version single-sourcing across pubspec/podspec/
+# changelog, native-pin agreement, method-channel parity across Dart/Kotlin/
+# Swift, channel-name agreement, surface-golden freshness, and gate drift.
+# Pure grep/python, no network — see scripts/docs-verify.sh.
+#
+# This is the deterministic backstop for the LLM-driven docs-sync / docs-audit
+# workflows: those can hallucinate an "all good" summary, this cannot.
+#
+# This workflow never pushes commits.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "CHANGELOG.md"
+      - "lib/**"
+      - "android/**"
+      - "ios/**"
+      - "pubspec.yaml"
+      - "api/**"
+      - "scripts/**"
+      - ".claude/skills/**"
+      # The gate-consistency check (docs-verify.sh check 6) reads these:
+      - "Makefile"
+      - "CLAUDE.md"
+      - ".github/workflows/build-test.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Mechanical doc & bridge checks
+        run: bash scripts/docs-verify.sh
+
+      - name: Public Dart surface golden
+        run: python3 scripts/dart_surface.py --check

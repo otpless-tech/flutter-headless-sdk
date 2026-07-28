@@ -1,2 +1,11 @@
+# Files that live in the repo but must NOT ship in the pub package.
+# The package is what merchants download; repo tooling is not their concern.
 docs
 doc
+.claude
+.github
+scripts
+api
+Makefile
+CLAUDE.md
+test

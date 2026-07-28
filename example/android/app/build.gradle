@@ -48,19 +48,30 @@ android {
         //endregion
     }
 
+    // Release signing is OPTIONAL. `signingConfigs` is evaluated at configuration
+    // time, so an unconditional `file(localProperties.getProperty("storeFile"))`
+    // threw "path may not be null or empty string" for EVERY gradle task —
+    // including assembleDebug — on any machine without a keystore in
+    // local.properties. That made the example app unbuildable, which in turn made
+    // the Kotlin bridge unverifiable (see the verify skill, rung 2).
+    def hasReleaseKeystore = localProperties.getProperty("storeFile") != null
+
     signingConfigs {
-        release {
-            storeFile file(localProperties.getProperty("storeFile"))
-            storePassword localProperties.getProperty("storePassword")
-            keyAlias localProperties.getProperty("keyAlias")
-            keyPassword localProperties.getProperty("keyPassword")
+        if (hasReleaseKeystore) {
+            release {
+                storeFile file(localProperties.getProperty("storeFile"))
+                storePassword localProperties.getProperty("storePassword")
+                keyAlias localProperties.getProperty("keyAlias")
+                keyPassword localProperties.getProperty("keyPassword")
+            }
         }
     }
 
     buildTypes {
         release {
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.release
+            // Fall back to the debug keys when no keystore is configured, so
+            // `flutter build apk --release` works on CI for size measurement.
+            signingConfig hasReleaseKeystore ? signingConfigs.release : signingConfigs.debug
         }
     }
     namespace 'com.example.otpless_flutter_example'
