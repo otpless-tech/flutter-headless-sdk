@@ -15,13 +15,15 @@ The **OTPLESS headless Flutter plugin** (pub package `otpless_headless_flutter`)
 
 `example/` is a **testbed — never document it, never treat its changes as plugin changes.** The one exception: its build is the only proof the native bridges compile (`make example-android` / `make example-ios`).
 
-Start every non-trivial task by reading **`docs/SDK-GUIDE.md`** — the canonical description of this plugin (layers, every channel method end-to-end, the response contract, platform asymmetries, quirks). Do not re-derive the architecture; trust the guide, verify against code where it matters, and fix the guide if they disagree.
+Start every non-trivial task by reading **this plugin's pages in Atlas** (`otpless-tech/atlas` → `repos/flutter-headless-sdk/`) — the canonical description: layers, every channel method end-to-end, the response contract, platform asymmetries, quirks. Do not re-derive the architecture; trust those pages, verify against code where it matters, and fix them if they disagree.
+
+**Atlas is the only home for that documentation — this repo has no `docs/` directory.** The `atlas-docs` CI job fails any PR here that would leave an Atlas page this repo owns stale; that is what replaces an in-repo doc fact-check.
 
 > **Sibling context.** The parent workspace `CLAUDE.md` (loaded automatically) carries the cross-repo topology and the four change-flow rules. The two facts that bind this repo: it consumes **android-full + iOS**, the same lane as `react-native-headless-sdk`; and the response contract is backend-driven, so this wrapper **marshals payloads verbatim and must never reshape them**.
 
 ### Making code changes: use the guide first, read code narrowly
 
-1. **Locate via the guide** — find the channel method or flow in `docs/SDK-GUIDE.md`. It names the exact Dart method, the channel string, and both native handlers.
+1. **Locate via the guide** — find the channel method or flow in this repo's Atlas pages. They name the exact Dart method, the channel string, and both native handlers.
 2. **Read the three layers for that one method** — Dart, Kotlin, Swift. They are small files; read them in full. Do not sweep the repo.
 3. **Verify before editing** — code is the source of truth. If it disagrees with the guide, the guide is stale: do the task, then fix the guide.
 4. **Make the change on all layers that need it.** A channel method touched on one platform and not the other is the single most common defect class in this repo — see article 1.
@@ -58,13 +60,11 @@ bash scripts/docs-verify.sh
 | **verify** | Before claiming any change works. Climbs Dart tests → gate → native example builds → manual device smoke. `flutter test` alone is never verification for a bridge change. |
 | **bridge-method** | Adding, renaming, or removing a channel method — the cross-cutting recipe across five files (Dart API, Dart channel, Kotlin, Swift, golden) plus docs, whose steps `docs-verify.sh` checks mechanically. |
 | **bump-native-sdk** | Bumping `otpless-headless-sdk` or `OtplessBM/Core`. Diffs the upstream's committed API goldens between versions to enumerate bridge work, then runs the gate + example builds. |
-| **docs-sync** | Any time `lib/`, `android/` or `ios/` changed and `docs/SDK-GUIDE.md` / `CHANGELOG.md` must catch up. Owns `docs/.doc-sync-state` and the `[docs-sync]` commit marker. |
+| **docs-sync** | Any time `lib/`, `android/` or `ios/` changed and `CHANGELOG.md` must catch up. The Atlas side is automatic — the `atlas-docs` workflow regenerates mechanical pages on merge and gates staleness on every PR — so this skill now owns the CHANGELOG rules only. |
 | **add-tests** | Writing Dart tests — the `TestDefaultBinaryMessengerBinding` recipe, what is and isn't testable from Dart, contract-fixture rules. |
 | **pr-review** | Reviewing any PR or diff against the six constitution articles below, in order, before merge. |
 | **release** | Cutting a release: version bump in `pubspec.yaml` → changelog promotion → `flutter pub publish`. |
 | **size-review** | Every PR touching `lib/`/`android/`/`ios/`: package size and the transitive weight the plugin imposes on merchant apps. |
-
-`docs/.doc-sync-state` holds the commit SHA the docs were last synced to; doc-sync commits use the `[docs-sync]` marker and contain only doc files.
 
 ---
 
@@ -97,7 +97,7 @@ This plugin runs inside merchants' Flutter apps. We are a guest in their process
 
 ### 3. Privacy & auditability
 
-- **The wrapper adds no data collection.** All telemetry originates in the native SDKs. If this plugin ever collects or forwards anything itself, it needs product sign-off and a same-PR `docs/SDK-GUIDE.md` entry.
+- **The wrapper adds no data collection.** All telemetry originates in the native SDKs. If this plugin ever collects or forwards anything itself, it needs product sign-off and a same-PR update to this repo's Atlas pages.
 - **No PII in logs, ever.** Phone numbers, OTPs, tokens and identities must not reach `print()`/logcat/NSLog. `setDevLogging` gates verbose native logging; the plugin's own code should not log payloads at all. Note the current asymmetry: iOS only *installs* a logger delegate when enabling and never removes it, so `setDevLogging(false)` does not disable iOS logging — treat that as a bug, not a pattern.
 - **Marshal verbatim.** Response payloads are backend-driven and shared with android-full and iOS. Do not filter, rename, reshape, or "clean up" keys in transit — a wrapper that edits the contract silently breaks platform parity (hub rule 4).
 
@@ -128,6 +128,5 @@ This plugin runs inside merchants' Flutter apps. We are a guest in their process
 - **Git workflow:** `main` is protected — never push it directly (a `.claude/settings.json` rule also denies it locally). Work on a feature branch, open a PR, fill the template's constitution checklist. CI on every PR: `build-test` (the gate), `docs-verify`, `size-check`, `actionlint`.
 - **Worktree-driven development:** the primary checkout belongs to the human — never switch its branches or reset its state to do agent work. Every independent task, and every agent working in parallel with another, gets its own `git worktree` (`git worktree add /tmp/<repo>-<task> <branch>`), commits and pushes from there, and removes it when done.
 - **Never document or refactor `example/`** unless explicitly asked; it is a testbed.
-- **`docs/superpowers/`** holds design specs and plans from prior agent sessions (e.g. the 2.0.0 version-alignment work). Read the relevant one before redoing analysis it already contains; it is history, not a source of truth about current code.
 - Response payloads cross the channel as **JSON strings**, not structured maps (`json.encode` in Dart, `JSONObject`/`JSONSerialization` natively). Match that pattern; do not send a raw `Map` for a payload the other side decodes as a string.
 - The `otpless_callback_event` reverse invocation is the **only** path from native to Dart. Keep it that way — a second callback channel would fragment ordering guarantees.

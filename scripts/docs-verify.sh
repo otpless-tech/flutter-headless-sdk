@@ -21,7 +21,6 @@ DART_LIB="lib"
 KOTLIN="android/src/main/kotlin/com/otpless/headlessflutter/OtplessFlutterHeadless.kt"
 SWIFT="ios/Classes/SwiftOtplessFlutterHeadless.swift"
 PODSPEC="ios/otpless_headless_flutter.podspec"
-GUIDE="docs/SDK-GUIDE.md"
 
 # ---------------------------------------------------------------------------
 # 1. Version is single-sourced in pubspec.yaml
@@ -192,31 +191,16 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 7. SDK-GUIDE consistency (skipped until the guide lands)
+# 7. (removed) SDK-GUIDE consistency
+#
+# Platform documentation now lives in otpless-tech/atlas, not in this repo, so
+# there is no local guide to fact-check. The equivalent check did not disappear —
+# it moved to Atlas's verify-docs workflow, which this repo's atlas-docs job
+# calls on every PR. That job checks out both this PR and Atlas and fails the PR
+# if a page this repo owns has fallen behind.
+#
+# Everything above is source-side and unaffected: it reads only this repo.
 # ---------------------------------------------------------------------------
-if [ ! -f "$GUIDE" ]; then
-  warn "$GUIDE does not exist yet (SDK-GUIDE PR pending) — guide checks skipped"
-else
-  # Every public Dart entry point must be named somewhere in the guide.
-  undoc=""
-  while read -r m; do
-    [ -z "$m" ] && continue
-    grep -q "$m" "$GUIDE" || undoc="$undoc $m"
-  done <<EOF
-$(grep -oE '^  Future<[^>]*> [a-zA-Z]+\(' api/dart-surface.txt | grep -oE ' [a-zA-Z]+\($' | tr -d ' (' | sort -u)
-EOF
-  if [ -n "$undoc" ]; then
-    fail "public Dart methods absent from $GUIDE:$undoc"
-  else
-    pass "every public Dart method in the golden is documented in $GUIDE"
-  fi
-
-  if grep -q "$PUB_VERSION" "$GUIDE"; then
-    pass "$GUIDE references the current version $PUB_VERSION"
-  else
-    warn "$GUIDE does not mention version $PUB_VERSION"
-  fi
-fi
 
 echo
 echo "---"

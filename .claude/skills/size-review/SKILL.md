@@ -56,7 +56,7 @@ Ask, in order:
 - Dart source size in the tens of KB. Don't spend review time here.
 - `example/` changes — the testbed doesn't ship. (It's still the right place to *measure*.)
 - Test files — excluded from the package.
-- Documentation. `docs/SDK-GUIDE.md` is large and that's fine; keep it out of the published package via `.pubignore` and move on.
+- Documentation. This repo ships no `docs/` — platform documentation lives in Atlas — so there is nothing to exclude on that front.
 
 ## Reporting
 

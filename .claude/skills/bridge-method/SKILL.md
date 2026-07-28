@@ -19,7 +19,7 @@ For a channel method `fooBar`:
 | 4 | `ios/Classes/SwiftOtplessFlutterHeadless.swift` | `case "fooBar":` in `handleOnMainThread` |
 | 5 | `api/dart-surface.txt` | via `make surface-dump` — never hand-edited (a hook blocks it) |
 
-Then: `CHANGELOG.md` (merchant-visible phrasing) and `docs/SDK-GUIDE.md`.
+Then: `CHANGELOG.md` (merchant-visible phrasing). The Atlas page regenerates automatically on merge; the `atlas-docs` PR job fails this PR if it would be left stale.
 
 ## Step by step
 
@@ -92,7 +92,7 @@ bash scripts/docs-verify.sh
 
 - The golden diff should contain exactly your intended change and nothing else. An unexpected line means you changed more surface than you meant to.
 - `CHANGELOG.md`: one bullet under the top-most section, phrased as merchant-visible behavior. This is the primary signal for the public-docs automation.
-- `docs/SDK-GUIDE.md`: add the method to the channel-method table with its platform story.
+- Atlas: add the method to the channel-method table with its platform story. Mechanical pages regenerate on merge; a narrative page needs the edit in Atlas.
 
 ### 7. Verify
 
@@ -121,7 +121,7 @@ Remove the Dart API first and ship it; remove the native handlers a release late
 - [ ] iOS handler: no `as!`, `result` on every path
 - [ ] `make surface-dump` run and the diff reviewed
 - [ ] `CHANGELOG.md` bullet in merchant language
-- [ ] `docs/SDK-GUIDE.md` channel-method table updated
+- [ ] Atlas channel-method table updated (or confirmed auto-regenerated)
 - [ ] `make gate` green with no new WARN
 - [ ] `make example-android` and `make example-ios` both run (or the gap stated in the PR)
 - [ ] Parity statement in the PR (rn-full shares this lane)

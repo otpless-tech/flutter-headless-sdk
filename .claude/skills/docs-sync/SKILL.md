@@ -1,6 +1,6 @@
 ---
 name: docs-sync
-description: Sync docs/SDK-GUIDE.md and CHANGELOG.md with code changes in the OTPLESS Flutter plugin. Use whenever lib/, android/ or ios/ has changed and documentation must catch up, when running the docs-sync CI job, when asked to update the docs or changelog, or after merging any PR that touches the plugin.
+description: Sync CHANGELOG.md with code changes in the OTPLESS Flutter plugin, and keep this repo's Atlas pages honest. Use whenever lib/, android/ or ios/ has changed and documentation must catch up, when running the docs-sync CI job, when asked to update the docs or changelog, or after merging any PR that touches the plugin.
 ---
 
 # Syncing docs to code
@@ -9,22 +9,23 @@ Two artifacts, two different jobs:
 
 | File | Audience | Content |
 |---|---|---|
-| `docs/SDK-GUIDE.md` | agents and maintainers | exhaustive, current-state description of the code. No history. |
+| Atlas `repos/flutter-headless-sdk/` | agents and maintainers | exhaustive, current-state description of the code. No history. Lives in `otpless-tech/atlas`, NOT in this repo. |
 | `CHANGELOG.md` | merchants (and the public-docs automation) | per-release behavior changes, in merchant language. Append-only history. |
 
-`docs/.doc-sync-state` holds the commit SHA the docs were last synced to. Doc-sync commits carry the `[docs-sync]` marker and contain **only** doc files — never a source change.
+There is no `.doc-sync-state` here any more: Atlas tracks its own sync state, the `atlas-docs` workflow regenerates mechanical pages on merge, and its PR job fails any PR that would leave an Atlas page stale. What remains yours is the CHANGELOG.
 
 ## Procedure
 
 ### 1. Establish the range
 
 ```bash
-last=$(tr -d '[:space:]' < docs/.doc-sync-state)
-git log --no-merges --oneline "$last..HEAD" -- lib android ios pubspec.yaml api
-git diff --stat "$last..HEAD" -- lib android ios pubspec.yaml api
+# The CHANGELOG's own top section is the baseline: find the last release tag.
+last=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+git log --no-merges --oneline "${last:+$last..}HEAD" -- lib android ios pubspec.yaml
 ```
 
-If `.doc-sync-state` is missing or points at an unreachable commit, do not guess — say so and ask which SHA to use as the baseline.
+There is no `.doc-sync-state` to read — Atlas owns its own sync state. If no tag
+exists yet, say so and ask which SHA to use rather than guessing.
 
 ### 2. Read the actual diff, not the commit subjects
 
@@ -32,9 +33,9 @@ If `.doc-sync-state` is missing or points at an unreachable commit, do not guess
 
 Never restate a commit subject as if it were documented behavior. That is how a changelog ends up claiming a feature that shipped as a no-op — `startOnetap` and `sendUserAuthEvent` were documented as working on iOS while both returned immediately without doing anything.
 
-### 3. Update `docs/SDK-GUIDE.md`
+### 3. Update this repo's Atlas pages
 
-The guide describes **current state**. Rewrite the affected sections; don't append "as of 2.0.0" notes.
+Atlas describes **current state**. Rewrite the affected sections there; don't append "as of 2.0.0" notes. Mechanical pages (e.g. the public Dart surface) regenerate themselves — do not hand-edit them, a CI guard rejects it.
 
 Sections that go stale most often:
 - the channel-method table (one row per method: Dart signature → channel name → Android behavior → iOS behavior)
@@ -59,8 +60,7 @@ Merchant-language test: would a Flutter developer who has never seen this repo u
 ### 5. Stamp and verify
 
 ```bash
-git rev-parse HEAD > docs/.doc-sync-state
-bash scripts/docs-verify.sh
+bash scripts/docs-verify.sh    # source-side checks only; Atlas freshness is gated in CI
 ```
 
 The mechanical checks must pass. They catch: version drift across pubspec/podspec/changelog, an unrecorded native pin, a stale surface golden, and gate drift. They cannot catch a plausible-but-false sentence — that is your job.
