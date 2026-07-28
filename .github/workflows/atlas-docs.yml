@@ -24,6 +24,9 @@ jobs:
     with:
       source_repo: flutter-headless-sdk
       source_sha: ${{ github.event.pull_request.head.sha }}
+    secrets:
+      # Atlas is private; the caller's github.token cannot read it.
+      ATLAS_PAT: ${{ secrets.ATLAS_PAT }}
 
   sync:
     if: github.event_name == 'push'
