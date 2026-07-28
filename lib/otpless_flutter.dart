@@ -64,10 +64,6 @@ class Otpless {
         providerInfo: providerInfo);
   }
 
-  Future<void> setDeviceFingerprintMode(DeviceFingerprintMode mode) async {
-    return _otplessChannel.setDeviceFingerprintMode(mode);
-  }
-
   Future<void> setMfaEnabled(bool enabled) async {
     return _otplessChannel.setMfaEnabled(enabled);
   }

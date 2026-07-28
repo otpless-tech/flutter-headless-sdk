@@ -59,17 +59,6 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             result(nil)
         case "isSdkReady":
             result(Otpless.shared.isSdkReady())
-        case "setDeviceFingerprintMode":
-            let args = call.arguments as! [String: Any]
-            let modeStr = (args["mode"] as? String)?.uppercased() ?? "NONE"
-            let mode: DeviceFingerprintMode
-            switch modeStr {
-            case "ASYNC": mode = .ASYNC
-            case "SYNC":  mode = .SYNC
-            default:      mode = .NONE
-            }
-            Otpless.shared.setDeviceFingerprintMode(mode)
-            result(nil)
         case "setMfaEnabled":
             let args = call.arguments as! [String: Any]
             let enabled = (args["enabled"] as? Bool) ?? false

@@ -7,15 +7,12 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.otpless.longclaw.tc.OTScopeRequest
 import com.otpless.v2.android.sdk.dto.AuthEvent
-import com.otpless.v2.android.sdk.dto.DeviceFingerprintMode
-import com.otpless.v2.android.sdk.dto.OtplessRequest
 import com.otpless.v2.android.sdk.dto.OtplessResponse
 import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.session.OtplessSessionManager
 import com.otpless.v2.android.sdk.session.OtplessSessionState
 import com.otpless.v2.android.sdk.utils.OtplessUtils
-import com.otpless.v2.android.sdk.view.models.OtplessAuthConfig
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -43,7 +40,6 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     private lateinit var context: Context
     private lateinit var activity: WeakReference<FragmentActivity>
     private var otplessJob: Job? = null
-    private var defaultFingerprintMode: DeviceFingerprintMode = DeviceFingerprintMode.NONE
 
     override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "otpless_headless_flutter")
@@ -135,12 +131,6 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 startInBackground(call.parseJsonArg())
             }
 
-            "setDeviceFingerprintMode" -> {
-                val mode = safeEnumValueOf<DeviceFingerprintMode>(call.argument<String>("mode"))
-                defaultFingerprintMode = mode ?: DeviceFingerprintMode.NONE
-                result.success(null)
-            }
-
             "setMfaEnabled" -> {
                 val enabled = call.argument<Boolean>("enabled") ?: false
                 OtplessSDK.isMfaEnabled = enabled
@@ -224,7 +214,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     private fun start(json: JSONObject) {
         val fa = activity.get() ?: return
-        val request = parseJsonToOtplessRequest(json).applyDefaultFingerprintMode()
+        val request = parseJsonToOtplessRequest(json)
         val isOtpVerification = json.optString("otp").isNotEmpty()
         if (!isOtpVerification) {
             otplessJob?.cancel()
@@ -239,7 +229,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     private fun startInBackground(json: JSONObject) {
         val fa = activity.get() ?: return
-        val request = parseJsonToOtplessRequest(json).applyDefaultFingerprintMode()
+        val request = parseJsonToOtplessRequest(json)
         otplessJob?.cancel()
         otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
             OtplessSDK.startInBackground(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
@@ -250,22 +240,9 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
         otplessJob?.cancel()
         val fa = activity.get() ?: return run { result.success(false) }
         otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
-            val config = parseToOtplessAuthConfig(json).applyDefaultFingerprintMode()
+            val config = parseToOtplessAuthConfig(json)
             result.success(OtplessSDK.start(config))
         }
-    }
-
-    private fun OtplessRequest.applyDefaultFingerprintMode(): OtplessRequest {
-        if (this.deviceFingerprintMode == DeviceFingerprintMode.NONE && defaultFingerprintMode != DeviceFingerprintMode.NONE) {
-            this.deviceFingerprintMode = defaultFingerprintMode
-        }
-        return this
-    }
-
-    private fun OtplessAuthConfig.applyDefaultFingerprintMode(): OtplessAuthConfig {
-        return if (this.deviceFingerprintMode == DeviceFingerprintMode.NONE && defaultFingerprintMode != DeviceFingerprintMode.NONE) {
-            this.copy(deviceFingerprintMode = defaultFingerprintMode)
-        } else this
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

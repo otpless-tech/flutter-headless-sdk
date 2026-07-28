@@ -6,14 +6,14 @@
 
 ### Android
 - Bump `otpless-headless-sdk` to `v0.9.0`.
-- New public APIs: `setDeviceFingerprintMode`, `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`, `startInBackground`, `checkSimBindingStatus`, `clearSimBinding`, `setSimBindingEnabled`, `closeDialogIfOpen`.
+- New public APIs: `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`, `startInBackground`, `checkSimBindingStatus`, `clearSimBinding`, `setSimBindingEnabled`, `closeDialogIfOpen`.
 - Request-parser hardening: guards against unknown channels and empty-string setters; now accepts `code`, `extras`, `requestId`, `deviceFingerprintMode` on the `start` / `startInBackground` request map.
 - Replace removed `OtplessRequest.hasOtp()` call with a JSON-side check.
 
 ### iOS
 - Bump `OtplessBM/Core` to `2.3.2`.
 - `startOnetap`, `sendUserAuthEvent` now execute on iOS (were previously no-ops).
-- New public APIs mirroring Android: `setDeviceFingerprintMode`, `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`.
+- New public APIs mirroring Android: `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`.
 - Documented in README: `handleDeeplink`, `registerFBApp`, `authorizeViaPasskey` — client wires these into their own `AppDelegate` / `SceneDelegate`.
 
 ### Fixes

@@ -41,7 +41,6 @@ The underlying native SDKs (`otpless-headless-sdk 0.9.0`, `OtplessBM/Core 2.3.2`
 | `commitResponse` | ✅ | ✅ |
 | `isSdkReady` | ✅ | ✅ |
 | `sendUserAuthEvent` | ✅ | ✅ *(new in 2.0)* |
-| `setDeviceFingerprintMode` | ✅ | ✅ |
 | `setMfaEnabled` | ✅ | ✅ |
 | `initSession` / `getActiveSession` / `logoutSession` | ✅ | ✅ |
 | `startInBackground` (silent regular auth) | ✅ | ❌ (no SDK equivalent) |
@@ -308,7 +307,6 @@ override func application(_ app: UIApplication, open url: URL, options: [UIAppli
 
 ## New features
 
-- `setDeviceFingerprintMode(DeviceFingerprintMode)` — global default fingerprint strategy. Override per request by adding a `deviceFingerprintMode` key to the `start()` map.
 - `setMfaEnabled(bool)` — enable MFA. Watch for `MFA_FACTOR_COMPLETED` in your response handler.
 - `initSession(appId)` / `getActiveSession()` / `logoutSession()` — JWT-based session persistence.
 - `startInBackground(callback, requestMap)` — Android-only silent variant of `start()` that suppresses `OTP_AUTO_READ` intermediates.

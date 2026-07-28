@@ -109,11 +109,6 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     return (res as bool?) ?? false;
   }
 
-  Future<void> setDeviceFingerprintMode(DeviceFingerprintMode mode) async {
-    await methodChannel
-        .invokeMethod("setDeviceFingerprintMode", {'mode': mode.name});
-  }
-
   Future<void> setMfaEnabled(bool enabled) async {
     await methodChannel.invokeMethod("setMfaEnabled", {'enabled': enabled});
   }
