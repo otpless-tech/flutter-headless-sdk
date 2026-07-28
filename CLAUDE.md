@@ -15,7 +15,7 @@ The **OTPLESS headless Flutter plugin** (pub package `otpless_headless_flutter`)
 
 `example/` is a **testbed — never document it, never treat its changes as plugin changes.** The one exception: its build is the only proof the native bridges compile (`make example-android` / `make example-ios`).
 
-Start every non-trivial task by reading **`docs/SDK-GUIDE.md`** — the canonical description of this plugin (layers, every channel method end-to-end, the response contract, platform asymmetries, quirks). Do not re-derive the architecture; trust the guide, verify against code where it matters, and fix the guide if they disagree.
+Start every non-trivial task by reading **`docs/SDK-GUIDE.md`** — the canonical description of this plugin: the three layers (§2), the channel contract (§3), the public Dart API (§4), a catalog of all 19 channel methods (§5), flows end-to-end (§6), the response contract (§7), request marshalling per platform (§8), the platform-asymmetry matrix (§9), build/toolchain (§13), and 15 verified quirks (§15). Do not re-derive the architecture; trust the guide, verify against code where it matters, and fix the guide if they disagree.
 
 > **Sibling context.** The parent workspace `CLAUDE.md` (loaded automatically) carries the cross-repo topology and the four change-flow rules. The two facts that bind this repo: it consumes **android-full + iOS**, the same lane as `otpless-rn-full`; and the response contract is backend-driven, so this wrapper **marshals payloads verbatim and must never reshape them**.
 

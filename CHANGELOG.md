@@ -31,6 +31,15 @@
 - Excluded repo tooling (`.claude/`, `.github/`, `scripts/`, `api/`, `Makefile`,
   `CLAUDE.md`, `test/`) from the published pub package via `.pubignore`.
 - Removed `CLAUDE.md` from `.gitignore` — the constitution must be tracked.
+- Added `docs/SDK-GUIDE.md`: the canonical description of the plugin — all three
+  layers, every one of the 19 channel methods end-to-end, the response contract
+  and both marshalling directions, request-key tables per platform, the platform
+  asymmetry matrix, build/toolchain facts, and 15 verified quirks. Its § numbers
+  are stable identifiers referenced from CLAUDE.md and the skills.
+- `make gate` now depends on a `deps` target (`flutter pub get`). Without a
+  resolved package config, `dart format` selects a different default language
+  version and reports every file as needing reformatting, so the gate failed on
+  a fresh clone for a reason unrelated to the diff.
 
 ### Known issues (documented, not yet fixed)
 

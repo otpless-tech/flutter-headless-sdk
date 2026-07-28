@@ -11,6 +11,7 @@ GATE_CMD = dart format --output=none --set-exit-if-changed lib test && flutter a
 
 help:
 	@echo "make gate           full verification gate (run before claiming any change works)"
+	@echo "make deps           flutter pub get (gate prerequisite)"
 	@echo "make test           flutter test only"
 	@echo "make analyze        flutter analyze --fatal-infos lib test"
 	@echo "make format         check formatting (no writes)"
@@ -21,10 +22,17 @@ help:
 	@echo "make example-android build the example app against the pinned native SDKs"
 	@echo "make example-ios     build the example app for iOS (no codesign)"
 
-gate:
+# `deps` is a prerequisite, not part of GATE_CMD: without a resolved package
+# config, `dart format` picks a different default language version and reports
+# every file as needing reformatting, so the gate fails on a fresh clone or a
+# new worktree for a reason that has nothing to do with the diff.
+gate: deps
 	$(GATE_CMD)
 	python3 scripts/dart_surface.py --check
 	bash scripts/docs-verify.sh
+
+deps:
+	flutter pub get
 
 test:
 	flutter test
