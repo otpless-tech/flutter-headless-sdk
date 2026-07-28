@@ -69,7 +69,7 @@ Judge the evidence, not the claim.
 - **Diff touches `android/`?** `make example-android` is required. **`ios/`?** `make example-ios` is required. `flutter test` cannot compile either bridge — if the author implies otherwise, correct it.
 - Behavioral change → which flows were exercised in `example/`, on which platform?
 - Did a new `WARN` appear in `docs-verify.sh`? Ask why.
-- **Parity statement present?** Required on every merchant-visible PR. This repo shares the android-full + iOS lane with `otpless-rn-full`, so most changes here apply there too. A missing statement is a blocking finding under hub rules 1–3.
+- **Parity statement present?** Required on every merchant-visible PR. This repo shares the android-full + iOS lane with `react-native-headless-sdk`, so most changes here apply there too. A missing statement is a blocking finding under hub rules 1–3.
 
 ## Writing the review
 

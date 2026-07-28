@@ -77,13 +77,22 @@ Related trap: android-full published `0.9.0` to Maven Central with **no git tag*
 
 This plugin is a leaf — nothing pins it. But a release here is the moment to check the reverse direction: are its native pins current?
 
+Query the remotes directly — no checkout and no assumption about where the
+workspace hub keeps things:
+
 ```bash
-# in the workspace hub
-git -C otpless-headless-android-sdk tag --sort=-v:refname | head -3
-git -C ios-headless tag --sort=-v:refname | head -3
+git ls-remote --tags --sort=-v:refname \
+  git@github.com:otpless-tech/otpless-headless-android-sdk.git | head -3
+git ls-remote --tags --sort=-v:refname \
+  git@github.com:otpless-tech/otpless-headless-iOS-sdk.git | head -3
 ```
 
-If either upstream has moved, note it in the release PR so it's scheduled rather than forgotten. Also state whether `otpless-rn-full` — which pins the same two natives — is on the same versions; divergence there is tracked in the hub's `docs/PARITY.md`.
+Caveat learned the hard way: android-full has published to Maven Central **without
+tagging** (0.9.0), so a missing tag does not prove a version is unavailable. For
+Android, confirm against Maven Central as in the **bump-native-sdk** skill's
+step 1; the tag list is a convenience, not the authority.
+
+If either upstream has moved, note it in the release PR so it's scheduled rather than forgotten. Also state whether `react-native-headless-sdk` — which pins the same two natives — is on the same versions; divergence there is tracked in the hub's `docs/PARITY.md`.
 
 ## Checklist
 

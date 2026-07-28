@@ -33,15 +33,37 @@ A live trap: android-full published **0.9.0 to Maven Central with no git tag**, 
 
 This is the mechanical part, and the reason the sibling repos committed API goldens. Do not read the whole upstream diff.
 
+Locate the upstream checkout **by GitHub repo name**, never by a hardcoded path — the workspace hub's directory layout is not a contract and has already changed once (flat → tiered), which silently broke every `../sibling` reference:
+
 ```bash
-# In the workspace hub, against the upstream repo:
-git -C ../otpless-headless-android-sdk diff <old-tag>..<new-tag> -- \
+sibling() {
+  repo="$1"
+  dir=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
+  hub=""
+  while [ -n "$dir" ] && [ "$dir" != "/" ]; do
+    dir=$(dirname "$dir")
+    if [ -f "$dir/.gitmodules" ]; then hub="$dir"; break; fi
+  done
+  [ -n "$hub" ] || return 1
+  key=$(git -C "$hub" config -f .gitmodules --get-regexp 'submodule\..*\.url' \
+        | awk -v r="$repo" '$2 ~ ("[:/]" r "\\.git$") {print $1; exit}')
+  [ -n "$key" ] || return 1
+  rel=$(git -C "$hub" config -f .gitmodules --get "${key%.url}.path") || return 1
+  printf '%s/%s\n' "$hub" "$rel"
+}
+
+ANDROID_FULL=$(sibling otpless-headless-android-sdk) || {
+  echo "upstream not checked out — fall back to the GitHub compare view"; }
+
+git -C "$ANDROID_FULL" diff <old-tag>..<new-tag> -- \
   LongClaw/api/LongClaw.api LongClaw/api/shipped-surface.txt
 ```
 
+If the resolver fails (a standalone clone with no hub above it), say so and use GitHub's compare view for the two tags — **do not** report "no bridge work required" on the strength of a diff you could not run.
+
 Every removed or changed line in `LongClaw.api` that this plugin's Kotlin bridge touches is required work. Every added line is a **candidate** new capability to expose (a separate decision — use the **bridge-method** skill, and don't smuggle new features into a bump PR).
 
-For iOS, the equivalent baseline is `ios-headless`'s `swift-api-digester` baseline. If it isn't merged upstream yet, fall back to reading the upstream changelog **and** grepping the bridge's call sites:
+For iOS, the equivalent baseline is `otpless-headless-iOS-sdk`'s `swift-api-digester` baseline. If it isn't merged upstream yet, fall back to reading the upstream changelog **and** grepping the bridge's call sites:
 
 ```bash
 grep -oE 'Otpless(SDK|\.shared)\.[a-zA-Z]+' \
@@ -81,7 +103,7 @@ Then rung 3 of the **verify** skill: run `example/` on a device and exercise ini
 
 ## Step 6 — parity
 
-Hub rule 3 fans out: `otpless-rn-full` pins the **same two SDKs** as this plugin. A bump here almost always implies one there.
+Hub rule 3 fans out: `react-native-headless-sdk` pins the **same two SDKs** as this plugin. A bump here almost always implies one there.
 
 - Check what rn-full currently pins before opening the PR.
 - Carry a parity statement: `Parity: ported in react-native-headless-sdk#NN` or `Parity: port ticket <link>`.

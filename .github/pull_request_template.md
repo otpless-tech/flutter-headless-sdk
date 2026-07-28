@@ -10,7 +10,7 @@ the pr-review skill.
 
 ## Parity statement (REQUIRED — hub change-flow rules 1–3)
 
-<!-- Exactly one. This repo shares the android-full + iOS lane with otpless-rn-full. -->
+<!-- Exactly one. This repo shares the android-full + iOS lane with react-native-headless-sdk. -->
 
 - [ ] `Parity: ported in <repo>#NN`
 - [ ] `Parity: N/A — <reason>`

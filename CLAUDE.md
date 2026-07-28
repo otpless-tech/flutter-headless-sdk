@@ -17,7 +17,7 @@ The **OTPLESS headless Flutter plugin** (pub package `otpless_headless_flutter`)
 
 Start every non-trivial task by reading **`docs/SDK-GUIDE.md`** — the canonical description of this plugin (layers, every channel method end-to-end, the response contract, platform asymmetries, quirks). Do not re-derive the architecture; trust the guide, verify against code where it matters, and fix the guide if they disagree.
 
-> **Sibling context.** The parent workspace `CLAUDE.md` (loaded automatically) carries the cross-repo topology and the four change-flow rules. The two facts that bind this repo: it consumes **android-full + iOS**, the same lane as `otpless-rn-full`; and the response contract is backend-driven, so this wrapper **marshals payloads verbatim and must never reshape them**.
+> **Sibling context.** The parent workspace `CLAUDE.md` (loaded automatically) carries the cross-repo topology and the four change-flow rules. The two facts that bind this repo: it consumes **android-full + iOS**, the same lane as `react-native-headless-sdk`; and the response contract is backend-driven, so this wrapper **marshals payloads verbatim and must never reshape them**.
 
 ### Making code changes: use the guide first, read code narrowly
 
@@ -121,7 +121,7 @@ This plugin runs inside merchants' Flutter apps. We are a guest in their process
 - **`flutter test` proves only the Dart layer.** It cannot see Kotlin or Swift. Any diff touching `android/` or `ios/` requires the matching example build; state in the PR which you ran.
 - **Both platforms, every time.** A bridge change verified on one platform is not verified. If you cannot build the other, say so explicitly in the PR rather than implying coverage.
 - **Exercise the changed flow end-to-end** in `example/` for behavioral changes (init → start → response), and say which flows you exercised.
-- **Parity statement required.** Every merchant-visible PR carries `Parity: ported in <repo>#NN` / `Parity: N/A — <reason>` / `Parity: port ticket <link>` per hub rules 1–3. This repo shares the android-full + iOS lane with `otpless-rn-full`; changes here usually apply there too.
+- **Parity statement required.** Every merchant-visible PR carries `Parity: ported in <repo>#NN` / `Parity: N/A — <reason>` / `Parity: port ticket <link>` per hub rules 1–3. This repo shares the android-full + iOS lane with `react-native-headless-sdk`; changes here usually apply there too.
 
 ## General working rules
 
