@@ -2,8 +2,10 @@ PODS:
   - Flutter (1.0.0)
   - otpless_headless_flutter (0.0.1):
     - Flutter
-    - OtplessBM/Core (= 2.0.8)
-  - OtplessBM/Core (2.0.8)
+    - OtplessBM/Core (= 2.3.2)
+  - OtplessBM/Core (2.3.2):
+    - OtplessEventIO (~> 1.0)
+  - OtplessEventIO (1.0.0)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
@@ -12,6 +14,7 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - OtplessBM
+    - OtplessEventIO
 
 EXTERNAL SOURCES:
   Flutter:
@@ -21,8 +24,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
-  otpless_headless_flutter: bfdc25e6f58a317a88b431830687cf4bbe817d18
-  OtplessBM: d2f216a49a49376732823b9e7aa5fb23f0f89c98
+  otpless_headless_flutter: 50cfc6637235de4fe7a077368686085113b8b833
+  OtplessBM: 3d48bf9c6274dd951ce6ea417d0005f3155a31c9
+  OtplessEventIO: 4840f3d07db6675745e750df20c00bc687747599
 
 PODFILE CHECKSUM: 0dbd5a87e0ace00c9610d2037ac22083a01f861d
 

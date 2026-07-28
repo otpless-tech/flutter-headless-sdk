@@ -36,12 +36,15 @@ class _MyAppState extends State<MyApp> {
   String otpLength = "";
   String expiry = "";
 
-  String appId = "app_id_in_lowercase";
+  String appId = "YOUR_APP_ID";
+  bool _mfaEnabled = false;
+  bool _simBindingEnabled = false;
 
   @override
   void initState() {
     super.initState();
     _otplessHeadlessPlugin.initialize(appId, timeout: 23);
+    _otplessHeadlessPlugin.initSession(appId);
     _otplessHeadlessPlugin.setDevLogging(true);
     _otplessHeadlessPlugin.setResponseCallback(onHeadlessResult);
   }
@@ -71,34 +74,43 @@ class _MyAppState extends State<MyApp> {
     if (expiry.isNotEmpty) {
       arg["expiry"] = expiry;
     }
-    final bool isSdkReady = await _otplessHeadlessPlugin.isSdkReady();
-    setState(() {
-      _dataResponse = "$_dataResponse\n\nisSdkReady: $isSdkReady";
-    });
-
     _otplessHeadlessPlugin.start(onHeadlessResult, arg);
   }
 
   Future<void> startForegroundAuth() async {
     final config = OtplessAuthConfig(true, otp: otp);
-    final hasBg =
+    final started =
         await _otplessHeadlessPlugin.startOnetap(onHeadlessResult, config);
     setState(() {
-      _dataResponse = "$_dataResponse\n\nhasForeground: $hasBg";
+      _dataResponse = "startOnetap: $started\n\n$_dataResponse";
     });
   }
 
   Future<void> toggleMfa(bool enabled) async {
     await _otplessHeadlessPlugin.setMfaEnabled(enabled);
     setState(() {
-      _dataResponse = "$_dataResponse\n\nMFA enabled: $enabled";
+      _dataResponse = "MFA enabled: $enabled\n\n$_dataResponse";
+    });
+  }
+
+  Future<void> toggleSimBinding(bool enabled) async {
+    await _otplessHeadlessPlugin.setSimBindingEnabled(enabled);
+    setState(() {
+      _dataResponse = "SIM binding enabled: $enabled\n\n$_dataResponse";
+    });
+  }
+
+  Future<void> checkSimBinding() async {
+    final status = await _otplessHeadlessPlugin.checkSimBindingStatus();
+    setState(() {
+      _dataResponse = "SIM binding: $status\n\n$_dataResponse";
     });
   }
 
   Future<void> printActiveSession() async {
     final session = await _otplessHeadlessPlugin.getActiveSession();
     setState(() {
-      _dataResponse = "$_dataResponse\n\nactive session: $session";
+      _dataResponse = "active session: $session\n\n$_dataResponse";
     });
   }
 
@@ -108,7 +120,7 @@ class _MyAppState extends State<MyApp> {
     }
     setState(() {
       final newEntry = jsonEncode(result);
-      _dataResponse = "$_dataResponse\n\n$newEntry";
+      _dataResponse = "$newEntry\n\n$_dataResponse";
       _otplessHeadlessPlugin.commitResponse(result);
       String responseType = result["responseType"];
       if (responseType == "OTP_AUTO_READ") {
@@ -248,21 +260,36 @@ class _MyAppState extends State<MyApp> {
                   ),
                   const SizedBox(height: 16),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: CupertinoButton.tinted(
-                          onPressed: () => toggleMfa(true),
-                          child: const Text("MFA on"),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: CupertinoButton.tinted(
-                          onPressed: () => toggleMfa(false),
-                          child: const Text("MFA off"),
-                        ),
+                      const Text("MFA"),
+                      CupertinoSwitch(
+                        value: _mfaEnabled,
+                        onChanged: (v) {
+                          setState(() => _mfaEnabled = v);
+                          toggleMfa(v);
+                        },
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("SIM binding"),
+                      CupertinoSwitch(
+                        value: _simBindingEnabled,
+                        onChanged: (v) {
+                          setState(() => _simBindingEnabled = v);
+                          toggleSimBinding(v);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: checkSimBinding,
+                    child: const Text("Check SIM binding"),
                   ),
                   const SizedBox(height: 16),
                   CupertinoButton.tinted(

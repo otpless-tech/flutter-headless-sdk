@@ -8,17 +8,13 @@
 - Bump `otpless-headless-sdk` to `v0.9.0`.
 - New public APIs: `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`, `startInBackground`, `checkSimBindingStatus`, `clearSimBinding`, `setSimBindingEnabled`, `closeDialogIfOpen`.
 - Request-parser hardening: guards against unknown channels and empty-string setters; now accepts `code`, `extras`, `requestId`, `deviceFingerprintMode` on the `start` / `startInBackground` request map.
-- Replace removed `OtplessRequest.hasOtp()` call with a JSON-side check.
+
 
 ### iOS
 - Bump `OtplessBM/Core` to `2.3.2`.
 - `startOnetap`, `sendUserAuthEvent` now execute on iOS (were previously no-ops).
 - New public APIs mirroring Android: `setMfaEnabled`, `initSession`, `getActiveSession`, `logoutSession`.
-- Documented in README: `handleDeeplink`, `registerFBApp`, `authorizeViaPasskey` — client wires these into their own `AppDelegate` / `SceneDelegate`.
 
-### Fixes
-- `sendUserAuthEvent`: `providerInfo` optional parameter is now actually forwarded to the native SDK (was previously silently dropped due to inverted null check).
-- Test setup: two pre-existing test files instantiated the method channel before `TestWidgetsFlutterBinding.ensureInitialized()`, so `flutter test` had never actually run. Fixed.
 
 ## 1.1.1 (19th Jun 2026)
 ### iOS
