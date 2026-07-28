@@ -10,6 +10,8 @@ import com.otpless.v2.android.sdk.dto.AuthEvent
 import com.otpless.v2.android.sdk.dto.OtplessResponse
 import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
+import com.otpless.v2.android.sdk.session.OtplessSessionManager
+import com.otpless.v2.android.sdk.session.OtplessSessionState
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -120,12 +122,82 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 result.success(OtplessSDK.isSdkReady)
             }
 
-            "startBackground" -> {
-                startBackground(call.parseJsonArg(), result)
+            "startOnetap" -> {
+                startOnetap(call.parseJsonArg(), result)
+            }
+
+            "startInBackground" -> {
+                result.success(null)
+                startInBackground(call.parseJsonArg())
+            }
+
+            "setMfaEnabled" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: false
+                OtplessSDK.isMfaEnabled = enabled
+                result.success(null)
+            }
+
+            "initSession" -> {
+                val appId = call.argument<String>("appId")
+                if (appId.isNullOrEmpty()) {
+                    result.error("0", "appId is required for initSession", null)
+                    return
+                }
+                val mActivity = activity.get() ?: return run {
+                    result.error("0", "initSession called before activity is attached", null)
+                }
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    OtplessSessionManager.init(context, appId)
+                    result.success(null)
+                }
+            }
+
+            "getActiveSession" -> {
+                val mActivity = activity.get() ?: return run {
+                    result.success(mapOf("isActive" to false))
+                }
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    val state = OtplessSessionManager.getActiveSession()
+                    val map: Map<String, Any?> = when (state) {
+                        is OtplessSessionState.Active -> mapOf("isActive" to true, "jwtToken" to state.jwtToken)
+                        is OtplessSessionState.Inactive -> mapOf("isActive" to false)
+                    }
+                    result.success(map)
+                }
+            }
+
+            "logoutSession" -> {
+                val mActivity = activity.get() ?: return run { result.success(null) }
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    OtplessSessionManager.logout()
+                    result.success(null)
+                }
+            }
+
+            "checkSimBindingStatus" -> {
+                val mActivity = activity.get() ?: return run { result.success(false) }
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    result.success(OtplessSDK.checkSimBindingStatus(context))
+                }
+            }
+
+            "clearSimBinding" -> {
+                val mActivity = activity.get() ?: return run { result.success(null) }
+                mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    OtplessSDK.clearSimBinding(context)
+                    result.success(null)
+                }
+            }
+
+            "setSimBindingEnabled" -> {
+                val enabled = call.argument<Boolean>("enabled") ?: false
+                OtplessSDK.isSimBindingEnabled = enabled
+                result.success(null)
             }
 
             "closeDialogIfOpen" -> {
                 OtplessSDK.closeDialogIfOpen()
+                result.success(null)
             }
 
             "userAuthEvent" -> sendUserAuthEvent(call, result)
@@ -143,24 +215,33 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
     private fun start(json: JSONObject) {
         val fa = activity.get() ?: return
         val request = parseJsonToOtplessRequest(json)
-        if (request.hasOtp()) {
-            otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
-                OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
-            }
-        } else {
+        val isOtpVerification = json.optString("otp").isNotEmpty()
+        if (!isOtpVerification) {
             otplessJob?.cancel()
-            otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
-                OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
-            }
+        }
+        val newJob = fa.lifecycleScope.launch(Dispatchers.IO) {
+            OtplessSDK.start(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
+        }
+        if (!isOtpVerification) {
+            otplessJob = newJob
         }
     }
 
-    private fun startBackground(json: JSONObject, result: Result) {
+    private fun startInBackground(json: JSONObject) {
+        val fa = activity.get() ?: return
+        val request = parseJsonToOtplessRequest(json)
         otplessJob?.cancel()
-        activity.get()?.let { activity ->
-            otplessJob = activity.lifecycleScope.launch(Dispatchers.IO) {
-                result.success(OtplessSDK.start(parseToOtplessAuthConfig(json)))
-            }
+        otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
+            OtplessSDK.startInBackground(request = request, this@OtplessFlutterHeadless::onOtplessResponseCallback)
+        }
+    }
+
+    private fun startOnetap(json: JSONObject, result: Result) {
+        otplessJob?.cancel()
+        val fa = activity.get() ?: return run { result.success(false) }
+        otplessJob = fa.lifecycleScope.launch(Dispatchers.IO) {
+            val config = parseToOtplessAuthConfig(json)
+            result.success(OtplessSDK.start(config))
         }
     }
 

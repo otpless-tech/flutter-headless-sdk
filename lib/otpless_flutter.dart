@@ -46,9 +46,14 @@ class Otpless {
     return await _otplessChannel.isSdkReady();
   }
 
-  Future<bool> startBackground(
+  Future<bool> startOnetap(
       OtplessResultCallback callback, OtplessAuthConfig config) async {
-    return await _otplessChannel.startBackground(callback, config);
+    return await _otplessChannel.startOnetap(callback, config);
+  }
+
+  Future<void> startInBackground(
+      OtplessResultCallback callback, Map<String, dynamic> jsonObject) async {
+    return _otplessChannel.startInBackground(callback, jsonObject);
   }
 
   Future<bool> sendUserAuthEvent(
@@ -57,5 +62,37 @@ class Otpless {
     return await _otplessChannel.sendUserAuthEvent(
         event, fallback, providerType,
         providerInfo: providerInfo);
+  }
+
+  Future<void> setMfaEnabled(bool enabled) async {
+    return _otplessChannel.setMfaEnabled(enabled);
+  }
+
+  Future<void> initSession(String appId) async {
+    return _otplessChannel.initSession(appId);
+  }
+
+  Future<Map<String, dynamic>> getActiveSession() async {
+    return _otplessChannel.getActiveSession();
+  }
+
+  Future<void> logoutSession() async {
+    return _otplessChannel.logoutSession();
+  }
+
+  Future<void> closeDialogIfOpen() async {
+    return _otplessChannel.closeDialogIfOpen();
+  }
+
+  Future<bool> checkSimBindingStatus() async {
+    return _otplessChannel.checkSimBindingStatus();
+  }
+
+  Future<void> clearSimBinding() async {
+    return _otplessChannel.clearSimBinding();
+  }
+
+  Future<void> setSimBindingEnabled(bool enabled) async {
+    return _otplessChannel.setSimBindingEnabled(enabled);
   }
 }

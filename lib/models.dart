@@ -132,14 +132,21 @@ class OtplessAuthConfig {
   final bool isForeground;
   final String? otp;
   final String? tid;
+  final DeviceFingerprintMode deviceFingerprintMode;
 
-  const OtplessAuthConfig(this.isForeground, {this.otp, this.tid});
+  const OtplessAuthConfig(
+    this.isForeground, {
+    this.otp,
+    this.tid,
+    this.deviceFingerprintMode = DeviceFingerprintMode.none,
+  });
 
   Map<String, dynamic> toMap() {
     return {
       'isForeground': isForeground,
       if (otp != null) 'otp': otp,
-      if (tid != null) 'tid': tid
+      if (tid != null) 'tid': tid,
+      'deviceFingerprintMode': deviceFingerprintMode.name,
     };
   }
 }
@@ -147,3 +154,5 @@ class OtplessAuthConfig {
 enum AuthEvent { authInitiated, authSuccess, authFailed }
 
 enum ProviderType { client, otpless }
+
+enum DeviceFingerprintMode { none, async, sync }

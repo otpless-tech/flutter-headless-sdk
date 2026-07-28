@@ -12,6 +12,7 @@ import com.otpless.longclaw.tc.OTScope
 import com.otpless.longclaw.tc.OTVerifyOption
 import com.otpless.longclaw.tc.OtplessTruecallerRequest
 import com.otpless.v2.android.sdk.dto.AuthEvent
+import com.otpless.v2.android.sdk.dto.DeviceFingerprintMode
 import com.otpless.v2.android.sdk.dto.OtplessChannelType
 import com.otpless.v2.android.sdk.dto.OtplessRequest
 import com.otpless.v2.android.sdk.dto.OtplessResponse
@@ -27,50 +28,56 @@ private const val Tag = "OtplessFlutterHeadless"
 /// json serialization is not used because of enum parsing (channel) and conversion
 internal fun parseJsonToOtplessRequest(json: JSONObject): OtplessRequest {
     val otplessRequest = OtplessRequest()
-    // check for phone
+
     val phone = json.optString("phone")
-    if (phone.isNotEmpty()) {
-        val countryCode = json.getString("countryCode")
-        otplessRequest.setPhoneNumber(number = phone, countryCode = countryCode)
-        val otp = json.optString("otp")
-        if (otp.isNotEmpty()) {
-            otplessRequest.setOtp(otp)
+    val email = json.optString("email")
+    val channelType = json.optString("channelType")
+
+    when {
+        phone.isNotEmpty() -> {
+            val countryCode = json.optString("countryCode")
+            otplessRequest.setPhoneNumber(number = phone, countryCode = countryCode)
         }
-    } else {
-        // check for email
-        val email = json.optString("email")
-        // check for otp in case of phone and email
-        if (email.isNotEmpty()) {
-            otplessRequest.setEmail(email)
-            val otp = json.optString("otp")
-            if (otp.isNotEmpty()) {
-                otplessRequest.setOtp(otp)
-            }
-        } else {
-            // check for channel type
-            val channelType = json.getString("channelType")
-            otplessRequest.setChannelType(OtplessChannelType.values().first { it.channelTypeName == channelType })
-        }
-    }
-    json.optString("otpLength").let {
-        otplessRequest.setOtpLength(it)
-    }
-    json.optString("expiry").let {
-        otplessRequest.setExpiry(it)
+        email.isNotEmpty() -> otplessRequest.setEmail(email)
+        channelType.isNotEmpty() -> otplessRequest.setChannelType(OtplessChannelType.fromString(channelType))
     }
 
-    json.optString("tid").let {
-        otplessRequest.setTemplateId(it)
+    json.optString("otp").takeIf { it.isNotEmpty() }?.let { otplessRequest.setOtp(it) }
+    json.optString("code").takeIf { it.isNotEmpty() }?.let { otplessRequest.setCode(it) }
+    json.optString("otpLength").takeIf { it.isNotEmpty() }?.let { otplessRequest.setOtpLength(it) }
+    json.optString("expiry").takeIf { it.isNotEmpty() }?.let { otplessRequest.setExpiry(it) }
+    json.optString("tid").takeIf { it.isNotEmpty() }?.let { otplessRequest.setTemplateId(it) }
+    json.optString("deliveryChannel").takeIf { it.isNotEmpty() }?.let { otplessRequest.setDeliveryChannel(it) }
+    json.optString("requestId").takeIf { it.isNotEmpty() }?.let { otplessRequest.requestId = it }
+
+    json.optJSONObject("extras")?.let { extrasJson ->
+        val map = mutableMapOf<String, String>()
+        val keys = extrasJson.keys()
+        for (key in keys) {
+            val value = extrasJson.optString(key)
+            if (value.isNotEmpty()) map[key] = value
+        }
+        if (map.isNotEmpty()) otplessRequest.setExtras(map)
     }
 
-    val dChannelStr: String = json.optString("deliveryChannel")
-    otplessRequest.setDeliveryChannel(dChannelStr)
+    json.optString("deviceFingerprintMode").takeIf { it.isNotEmpty() }?.let { modeStr ->
+        safeEnumValueOf<DeviceFingerprintMode>(modeStr)?.let { mode ->
+            otplessRequest.deviceFingerprintMode = mode
+        }
+    }
+
     return otplessRequest
 }
 
 internal fun parseToOtplessAuthConfig(json: JSONObject): OtplessAuthConfig {
     val isForeground = json.optBoolean("isForeground", false)
-    return OtplessAuthConfig(isForeground, json.optString("otp"), json.optString("tid").takeIf { it.isNotEmpty() })
+    val otp = json.optString("otp")
+    val tid = json.optString("tid").takeIf { it.isNotEmpty() }
+    val fingerprintMode = json.optString("deviceFingerprintMode")
+        .takeIf { it.isNotEmpty() }
+        ?.let { safeEnumValueOf<DeviceFingerprintMode>(it) }
+        ?: DeviceFingerprintMode.NONE
+    return OtplessAuthConfig(isForeground, otp, tid, fingerprintMode)
 }
 
 /// convert response map object into otpless response
