@@ -1,0 +1,104 @@
+name: Size Check
+
+# Measures what this plugin costs a merchant's app. For a Flutter plugin the
+# shipped artifact is the pub package plus the transitive native dependencies
+# it drags in, so we track two numbers:
+#   1. the published package payload (`flutter pub publish --dry-run`)
+#   2. the release APK of example/, which includes the pinned native SDK
+#
+# Advisory: reports a delta, never blocks. Size discipline is enforced by
+# review (CLAUDE.md constitution article 5), not by an arbitrary byte gate.
+#
+# This workflow never pushes commits.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "android/**"
+      - "ios/**"
+      - "pubspec.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: size-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  size-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@fd55f4c5af5b953cc57a2be44cb082c8f6635e8e # v2.21.0
+        with:
+          channel: stable
+          cache: true
+
+      - name: Measure package payload
+        run: |
+          flutter pub get
+          # --dry-run lists every file that would ship and the total size.
+          flutter pub publish --dry-run 2>&1 | tee /tmp/publish.txt || true
+          echo "PACKAGE_REPORT<<EOF" >> "$GITHUB_ENV"
+          grep -iE 'total|package has|[0-9]+ (KB|MB)' /tmp/publish.txt | head -20 >> "$GITHUB_ENV" || true
+          echo "EOF" >> "$GITHUB_ENV"
+
+      - name: Build example release APK
+        working-directory: example
+        run: flutter build apk --release
+
+      - name: Report APK size
+        run: |
+          apk=$(find example/build -name '*-release.apk' | head -1)
+          if [ -n "$apk" ]; then
+            bytes=$(wc -c < "$apk" | tr -d ' ')
+            printf 'example release APK: %s bytes (%s KB)\n' "$bytes" "$((bytes / 1024))" | tee /tmp/apk.txt
+          else
+            echo "no release APK found" | tee /tmp/apk.txt
+          fi
+
+      - name: Comment size report
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const apk = fs.existsSync('/tmp/apk.txt')
+              ? fs.readFileSync('/tmp/apk.txt', 'utf8')
+              : 'no APK measurement';
+            const pkg = process.env.PACKAGE_REPORT || '(no package report)';
+            const body = [
+              '### Size check',
+              '',
+              '```',
+              apk.trim(),
+              '```',
+              '',
+              '<details><summary>pub publish --dry-run</summary>',
+              '',
+              '```',
+              pkg.trim(),
+              '```',
+              '',
+              '</details>',
+              '',
+              '_Advisory only. See the **size-review** skill and constitution article 5._',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body,
+            });

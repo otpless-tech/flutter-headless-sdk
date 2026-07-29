@@ -1,3 +1,53 @@
+## Unreleased
+
+### Repo & tooling
+
+- Brought the repo to agentic development readiness: a `CLAUDE.md` constitution,
+  a `make gate` verification gate (`dart format` + `flutter analyze --fatal-infos`
+  + `flutter test` + a public-Dart-surface golden + mechanical doc/bridge checks),
+  `.claude/skills/*` protocols, repo guard hooks, and six CI workflows
+  (build-test, docs-verify, size-check, docs-sync, docs-audit, `@claude`).
+- Added `api/dart-surface.txt`, a committed golden of the public Dart API
+  (`scripts/dart_surface.py`). Parameter names and enum values are included,
+  because Dart callers use named arguments and enum `.name` is the value sent
+  over the method channel — so renaming either is a breaking change that would
+  otherwise compile silently.
+- Added `scripts/docs-verify.sh`, which mechanically checks **method-channel
+  parity**: every `invokeMethod` name in `lib/` must have a handler in both the
+  Kotlin and Swift bridges. The channel is a stringly typed contract across
+  three languages with no compiler spanning it, so a half-ported method
+  previously reached merchants before anything failed.
+- **Fixed: the example app could not be built without a release keystore.**
+  `example/android/app/build.gradle` configured `signingConfigs.release`
+  unconditionally, and because `signingConfigs` is evaluated at configuration
+  time, `file(null)` failed *every* Gradle task — including `assembleDebug` —
+  with "path may not be null or empty string". Release signing is now optional
+  and falls back to the debug keys. This was required to make the Kotlin bridge
+  verifiable at all.
+- **Fixed: the podspec hardcoded `s.version = '0.0.1'`** while the package
+  shipped as 2.0.0, which also pointed `s.source`'s `:tag` at a git tag that
+  never existed. The version is now derived from `pubspec.yaml` at parse time,
+  and the gate fails if a literal version reappears.
+- Excluded repo tooling (`.claude/`, `.github/`, `scripts/`, `api/`, `Makefile`,
+  `CLAUDE.md`, `test/`) from the published pub package via `.pubignore`.
+- Removed `CLAUDE.md` from `.gitignore` — the constitution must be tracked.
+
+### Known issues (documented, not yet fixed)
+
+- `initialize`'s `timeout` parameter is accepted by the Dart API and sent over
+  the channel, but **neither native bridge reads it** — it has no effect.
+- The Kotlin `initialize` handler reads a `loginUri` argument that the Dart layer
+  never sends, so the deep-link login URI cannot be set from Flutter.
+- `cleanup` is implemented in both native bridges but reachable from no Dart API,
+  so in-flight jobs/tasks cannot be cancelled by a merchant.
+- `setDevLogging(false)` does not disable logging on iOS: the logger delegate is
+  installed when enabling and never removed.
+- The iOS dispatch's `default:` branch returns without calling `result`, so an
+  unknown channel method leaves the Dart `Future` pending forever (Android
+  correctly returns `notImplemented()`).
+- Several iOS handlers force-unwrap channel arguments (`call.arguments as!`,
+  `args["arg"] as!`), which would crash the host app on a malformed call.
+
 ## 2.0.0 (27th July 2026)
 ### Breaking
 - Renamed `startBackground(callback, config)` → `startOnetap(callback, config)`. Update all Dart call sites. See README migration section.

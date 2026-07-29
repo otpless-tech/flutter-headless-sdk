@@ -1,0 +1,138 @@
+name: Docs Sync
+
+# On merge to main, bring docs/SDK-GUIDE.md + CHANGELOG.md up to date with the
+# code that just landed, and open a `docs/sync` PR.
+#
+# KNOWN FAILURE MODE THIS WORKFLOW IS BUILT TO AVOID
+# --------------------------------------------------
+# The sibling Android repos have this same workflow broken (android-lite #37,
+# android-full #87: "docs-sync workflow cannot trigger claude-code-action on
+# push"), which is why both drifted several commits behind despite green CI.
+# Two causes, both handled here:
+#
+#   1. A PR created with the default GITHUB_TOKEN does NOT trigger downstream
+#      workflows — the docs PR appears with no CI, looking broken/unreviewable.
+#      Fix: use DOCS_SYNC_PAT when present.
+#   2. claude-code-action on a bare `push` has no PR/issue context, so it must
+#      be given an explicit prompt rather than relying on event inference.
+#
+# If either secret is absent the job still opens a PR containing the mechanical
+# drift report, so docs never silently stop being tracked. Degrade, don't skip.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "lib/**"
+      - "android/**"
+      - "ios/**"
+      - "pubspec.yaml"
+      - "api/**"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-sync
+  cancel-in-progress: false
+
+jobs:
+  docs-sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    # The `secrets` context is not available in step-level `if:`, so surface the
+    # two optional secrets as job env and branch on those instead.
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      HAS_PAT: ${{ secrets.DOCS_SYNC_PAT != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.DOCS_SYNC_PAT || github.token }}
+
+      - name: Compute documentation drift
+        id: drift
+        run: |
+          state_file="docs/.doc-sync-state"
+          if [ -f "$state_file" ]; then
+            last="$(tr -d '[:space:]' < "$state_file")"
+          else
+            last=""
+          fi
+          head_sha="$(git rev-parse HEAD)"
+          echo "head=$head_sha" >> "$GITHUB_OUTPUT"
+
+          if [ -z "$last" ] || ! git cat-file -e "$last^{commit}" 2>/dev/null; then
+            echo "No usable sync state; treating HEAD as the baseline."
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$last" = "$head_sha" ]; then
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Written to a file, never interpolated into a shell command —
+          # commit subjects are attacker-controllable text.
+          git log --no-merges --pretty='- %h %s' "$last..$head_sha" \
+            -- lib android ios pubspec.yaml api > /tmp/drift.md
+          git diff --stat "$last..$head_sha" \
+            -- lib android ios pubspec.yaml api >> /tmp/drift.md
+          if [ -s /tmp/drift.md ]; then
+            echo "drifted=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "drifted=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update docs with Claude
+        if: steps.drift.outputs.drifted == 'true' && env.ANTHROPIC_API_KEY != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Recipe execution against an existing skill + a mechanical gate.
+          # Model is pinned via claude_args (`model:` is not an action input).
+          claude_args: "--model claude-sonnet-5"
+          prompt: |
+            Follow .claude/skills/docs-sync/SKILL.md exactly for this repository.
+
+            The commits and diffstat that docs must catch up to are in
+            /tmp/drift.md. Read it first.
+
+            Rules you must not break:
+              - Update ONLY docs/SDK-GUIDE.md, CHANGELOG.md and
+                docs/.doc-sync-state. Touch no source file.
+              - Never edit an already-released CHANGELOG section; add to the
+                top-most (current/Unreleased) one.
+              - Verify every statement against the actual source before writing
+                it. Do not restate the commit subject as if it were behavior.
+              - Finish by running `bash scripts/docs-verify.sh` and make it pass.
+
+      - name: Stamp sync state
+        if: steps.drift.outputs.drifted == 'true'
+        env:
+          HEAD_SHA: ${{ steps.drift.outputs.head }}
+        run: printf '%s\n' "$HEAD_SHA" > docs/.doc-sync-state
+
+      - name: Open docs PR
+        if: steps.drift.outputs.drifted == 'true'
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          # A PAT makes the resulting PR trigger build-test/docs-verify. With the
+          # default token the PR opens but shows zero checks (cause 1 above).
+          token: ${{ secrets.DOCS_SYNC_PAT || github.token }}
+          branch: docs/sync
+          base: main
+          commit-message: "[docs-sync] sync documentation to ${{ steps.drift.outputs.head }}"
+          title: "[docs-sync] sync documentation to ${{ steps.drift.outputs.head }}"
+          body-path: /tmp/drift.md
+          labels: documentation
+          delete-branch: true
+
+      - name: Warn if PAT is missing
+        if: steps.drift.outputs.drifted == 'true' && env.HAS_PAT != 'true'
+        run: |
+          echo "::warning::DOCS_SYNC_PAT is not set. The docs PR was opened with the" \
+               "default GITHUB_TOKEN, so no CI will run on it. Set DOCS_SYNC_PAT to" \
+               "avoid the failure mode tracked in android-lite#37 / android-full#87."
