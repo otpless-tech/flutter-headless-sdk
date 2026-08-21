@@ -1,0 +1,198 @@
+name: Trivy Dependency Check
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'pubspec.yaml'
+      - 'android/build.gradle'
+      - 'ios/*.podspec'
+      - '.github/workflows/dependency-check.yml'
+  workflow_dispatch:
+
+jobs:
+  dependency-check:
+    name: CVE Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Resolve pub dependency versions (pubspec.lock)
+        run: flutter pub get
+
+      - name: Generate gradle.lockfile from android/build.gradle
+        run: |
+          set -euo pipefail
+
+          KOTLIN_VERSION=$(grep -oE "kotlin_version[[:space:]]*=[[:space:]]*'[^']+'" android/build.gradle | sed -E "s/.*'([^']+)'/\1/")
+          if [ -z "$KOTLIN_VERSION" ]; then
+            echo "::error::Could not resolve kotlin_version from android/build.gradle"
+            exit 1
+          fi
+
+          {
+            echo "# This is a Gradle generated file for dependency locking."
+            echo "# Manual edits can break the build and are not advised."
+            echo "# This file is expected to be part of source control."
+          } > gradle.lockfile
+
+          while IFS= read -r line; do
+            coord=$(echo "$line" | grep -oE '["'"'"'][A-Za-z0-9._-]+:[A-Za-z0-9._-]+:[^"'"'"']+["'"'"']' | tr -d '"'"'"'"' || true)
+            [ -z "$coord" ] && continue
+            coord="${coord//\$kotlin_version/$KOTLIN_VERSION}"
+            ver="${coord##*:}"
+            if [ "$ver" = "+" ] || [ -z "$ver" ]; then
+              echo "::notice::Skipping floating-version Android dependency (no fixed version to check against CVE DB): $coord"
+              continue
+            fi
+            if echo "$line" | grep -q '^\s*classpath'; then
+              echo "${coord}=classpath" >> gradle.lockfile
+            else
+              echo "${coord}=compileClasspath,runtimeClasspath" >> gradle.lockfile
+            fi
+          done < <(grep -E '(implementation|classpath)[[:space:]]*\(?["'"'"']' android/build.gradle)
+
+          echo "empty=annotationProcessor,testAnnotationProcessor,testCompileClasspath,testRuntimeClasspath" >> gradle.lockfile
+
+          if [ "$(grep -vc '^#' gradle.lockfile)" -le 1 ]; then
+            echo "::error::No fixed-version Android dependencies were extracted from android/build.gradle - failing instead of silently skipping the Android CVE scan"
+            exit 1
+          fi
+
+          echo "---- generated gradle.lockfile ----"
+          cat gradle.lockfile
+
+      - name: Generate Podfile.lock from ios/otpless_headless_flutter.podspec
+        run: |
+          set -euo pipefail
+
+          PINNED_DEPS=$(grep -oE "s\.dependency[[:space:]]+['\"][^'\"]+['\"],[[:space:]]*['\"][^'\"]+['\"]" ios/otpless_headless_flutter.podspec || true)
+
+          if [ -z "$PINNED_DEPS" ]; then
+            echo "::notice::No version-pinned CocoaPods dependencies found in ios/otpless_headless_flutter.podspec"
+          fi
+
+          {
+            echo "PODS:"
+            echo "$PINNED_DEPS" | sed -E "s/s\.dependency[[:space:]]+['\"]([^'\"]+)['\"],[[:space:]]*['\"]([^'\"]+)['\"]/  - \1 (\2)/"
+            echo ""
+            echo "DEPENDENCIES:"
+            echo "$PINNED_DEPS" | sed -E "s/s\.dependency[[:space:]]+['\"]([^'\"]+)['\"],[[:space:]]*['\"]([^'\"]+)['\"]/  - \1 (= \2)/"
+            echo ""
+            echo "COCOAPODS: 1.15.2"
+          } > Podfile.lock
+
+          echo "---- generated Podfile.lock ----"
+          cat Podfile.lock
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        env:
+          TRIVY_INCLUDE_DEV_DEPS: true
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'vuln'
+          version: 'latest'
+          format: 'json'
+          output: 'trivy-report.json'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Post PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const path = 'trivy-report.json';
+            if (!fs.existsSync(path)) {
+              console.log('No report found, skipping comment');
+              return;
+            }
+            const report = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const results = report.Results || [];
+
+            let critical = 0, high = 0, medium = 0;
+            const topVulnerable = [];
+            results.forEach(r => {
+              (r.Vulnerabilities || []).forEach(v => {
+                if (v.Severity === 'CRITICAL') critical++;
+                else if (v.Severity === 'HIGH') high++;
+                else if (v.Severity === 'MEDIUM') medium++;
+                topVulnerable.push({
+                  name: `${v.PkgName}@${v.InstalledVersion}`,
+                  id: v.VulnerabilityID,
+                  severity: v.Severity,
+                  target: r.Target,
+                });
+              });
+            });
+            const severityRank = { CRITICAL: 3, HIGH: 2, MEDIUM: 1, LOW: 0 };
+            topVulnerable.sort((a, b) => (severityRank[b.severity] || 0) - (severityRank[a.severity] || 0));
+            const top5 = topVulnerable.slice(0, 5);
+            const status = critical > 0 ? '🔴 Critical CVEs found' : high > 0 ? '🟠 High CVEs found' : '🟢 No critical/high CVEs';
+            const rows = top5.map(v => `| \`${v.name}\` | ${v.id} | ${v.severity} | ${v.target} |`).join('\n');
+            const marker = '<!-- trivy-dependency-check -->';
+            const body = [
+              marker,
+              '## 🔐 Trivy Dependency Check (pub + Android + iOS)',
+              '',
+              `**${status}**`,
+              '',
+              '| Severity | Count |',
+              '|---|---|',
+              `| 🔴 Critical | **${critical}** |`,
+              `| 🟠 High | **${high}** |`,
+              `| 🟡 Medium | **${medium}** |`,
+              `| 📦 Total findings | ${topVulnerable.length} |`,
+              '',
+              '### Top Vulnerabilities',
+              '| Dependency | CVE | Severity | Source |',
+              '|---|---|---|---|',
+              rows || '| _none_ | | | |',
+              '',
+              `> 📎 Full report available in [Actions artifacts](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+            ].join('\n');
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-report
+          path: |
+            trivy-report.json
+            gradle.lockfile
+            Podfile.lock
+          retention-days: 30
