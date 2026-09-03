@@ -31,4 +31,5 @@ build/
 
 .vscode
 
-CLAUDE.md
+# actionlint binary, downloaded on demand by CI and by local validation
+/actionlint

@@ -1,0 +1,82 @@
+name: Docs Audit
+
+# Monthly full re-verification of docs/SDK-GUIDE.md + CHANGELOG.md against the
+# entire current source tree, IGNORING docs/.doc-sync-state.
+#
+# Why this exists separately from docs-sync: docs-sync only looks at what
+# changed since the last sync SHA, so anything it got wrong (or a hand-edit that
+# bypassed it) stays wrong forever. This job re-reads everything from scratch
+# and opens an issue when it finds a discrepancy. It never pushes commits.
+
+on:
+  schedule:
+    # 06:00 UTC on the 1st of each month.
+    - cron: "0 6 1 * *"
+  workflow_dispatch:
+
+concurrency:
+  group: docs-audit
+  cancel-in-progress: false
+
+jobs:
+  docs-audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      # Deterministic first: if the mechanical checks fail, that is already an
+      # audit finding and needs no model.
+      - name: Mechanical checks
+        id: mech
+        continue-on-error: true
+        run: bash scripts/docs-verify.sh 2>&1 | tee /tmp/mech.txt
+
+      - name: Full docs audit
+        if: env.ANTHROPIC_API_KEY != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Judgment work: deciding whether prose matches behavior.
+          claude_args: "--model claude-opus-5"
+          prompt: |
+            Audit this repository's documentation against its ACTUAL source.
+            Ignore docs/.doc-sync-state entirely — re-derive everything.
+
+            Scope:
+              - docs/SDK-GUIDE.md vs lib/, android/src, ios/Classes
+              - CHANGELOG.md's current section vs what the code actually does
+              - api/dart-surface.txt vs lib/ (should already be enforced)
+              - README.md's documented API and native pins vs reality
+
+            For every claim in the docs, find the code that proves or disproves
+            it. Report ONLY discrepancies you can cite by file and line. Do not
+            rewrite the docs. Do not report style opinions.
+
+            The mechanical check output is in /tmp/mech.txt.
+
+            Finish by opening ONE GitHub issue titled
+            "docs-audit: <n> discrepancies (<month> <year>)" listing each finding
+            with its file:line evidence. If you find none, open no issue and say
+            so in the job log.
+
+      - name: Report mechanical failures without a model
+        if: env.ANTHROPIC_API_KEY == '' && steps.mech.outcome == 'failure'
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const fs = require('fs');
+            const out = fs.readFileSync('/tmp/mech.txt', 'utf8');
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'docs-audit: mechanical checks failing',
+              body: '`scripts/docs-verify.sh` failed during the scheduled audit.\n\n```\n'
+                + out.slice(0, 60000) + '\n```',
+              labels: ['documentation'],
+            });
