@@ -156,3 +156,16 @@ enum AuthEvent { authInitiated, authSuccess, authFailed }
 enum ProviderType { client, otpless }
 
 enum DeviceFingerprintMode { none, async, sync }
+
+/// Controls SSL certificate pinning for the OTPLESS backend
+/// (`sigma.otpless.app`) inside the native SDKs.
+///
+/// Pass to [Otpless.initialize]. Defaults to [disabled], which matches the
+/// pre-2.1 behaviour. When [enabled] and pin validation fails, the SDK fails
+/// closed and delivers `responseType: "FAILED"`, `statusCode: 5004` with
+/// `response: {"errorCode": "5004", "errorMessage": "SSL pin validation failed"}`
+/// on both platforms; no authentication request leaves the device.
+///
+/// Marshalled to the native side as the string `"enabled"` / `"disabled"`;
+/// unknown values are treated as disabled.
+enum OtplessSslPinning { disabled, enabled }

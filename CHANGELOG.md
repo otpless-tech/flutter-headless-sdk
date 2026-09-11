@@ -1,3 +1,19 @@
+## 2.1.0 (11th September 2026)
+### Features
+- `initialize(appId, sslPinning: OtplessSslPinning.enabled)` opts in to SSL certificate pinning of the OTPLESS backend on both Android and iOS. Default is `OtplessSslPinning.disabled`, so existing integrations are unchanged. When enabled and validation fails, the SDK fails closed and the response callback receives `responseType: "FAILED"`, `statusCode: 5004`, `response: {"errorCode": "5004", "errorMessage": "SSL pin validation failed"}`; no auth request leaves the device.
+- `initialize(appId, loginUri: ...)` is now honoured on both platforms (it was previously impossible to set from Dart).
+- Android: Google Play Integrity attestation ships inside `otpless-headless-sdk 2.0.1`. It is internal to the SDK and needs no plugin API.
+
+### Changes
+- Android: bump `otpless-headless-sdk` `0.9.0` → `2.0.1`.
+- iOS: bump `OtplessBM/Core` `2.3.2` → `3.0.0`; production host is now `sigma.otpless.app`.
+- iOS: the response delegate is bound inside `initialize` (parity with Android), so a `FAILED` emitted before `setResponseCallback` is no longer dropped.
+- Dart: the response-callback dispatcher is null-safe; a native event arriving before `setResponseCallback` no longer throws.
+- Podspec `s.version` now tracks `pubspec.yaml` (was stuck at `0.0.1`).
+
+### Deprecations
+- `initialize(..., timeout:)` is deprecated. It was never read by either native SDK and is no longer sent over the method channel. It will be removed in the next major release.
+
 ## 2.0.0 (27th July 2026)
 ### Breaking
 - Renamed `startBackground(callback, config)` → `startOnetap(callback, config)`. Update all Dart call sites. See README migration section.

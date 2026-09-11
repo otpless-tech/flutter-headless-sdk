@@ -28,7 +28,9 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
       if (call.method == "otpless_callback_event") {
         final json = call.arguments as String;
         final result = jsonDecode(json);
-        _callback!(result);
+        // The native side may emit before setResponseCallback has run (e.g. an
+        // early FAILED / 5004 right after initialize); never crash on that.
+        _callback?.call(result);
       }
     });
   }
@@ -47,9 +49,17 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     await methodChannel.invokeMethod("start", {'arg': json.encode(jsonObject)});
   }
 
-  Future<void> initialize(String appid, double timeout) async {
-    await methodChannel
-        .invokeMethod("initialize", {'appId': appid, 'timeout': timeout});
+  @override
+  Future<void> initialize(
+    String appId, {
+    OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
+    String? loginUri,
+  }) async {
+    await methodChannel.invokeMethod("initialize", {
+      'appId': appId,
+      'loginUri': loginUri,
+      'sslPinning': sslPinning.name,
+    });
   }
 
   Future<void> setResponseCallback(OtplessResultCallback callback) async {

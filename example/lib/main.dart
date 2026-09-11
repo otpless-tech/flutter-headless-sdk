@@ -39,14 +39,35 @@ class _MyAppState extends State<MyApp> {
   String appId = "YOUR_APP_ID";
   bool _mfaEnabled = false;
   bool _simBindingEnabled = false;
+  // SSL pinning is opt-in; leave off unless you are testing the 5004 path.
+  bool _sslPinningEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _otplessHeadlessPlugin.initialize(appId, timeout: 23);
+    initializeSdk();
     _otplessHeadlessPlugin.initSession(appId);
     _otplessHeadlessPlugin.setDevLogging(true);
     _otplessHeadlessPlugin.setResponseCallback(onHeadlessResult);
+  }
+
+  Future<void> initializeSdk() async {
+    await _otplessHeadlessPlugin.initialize(
+      appId,
+      sslPinning: _sslPinningEnabled
+          ? OtplessSslPinning.enabled
+          : OtplessSslPinning.disabled,
+    );
+  }
+
+  Future<void> toggleSslPinning(bool enabled) async {
+    // Pinning is fixed at initialize time, so re-initialise the SDK.
+    setState(() => _sslPinningEnabled = enabled);
+    await initializeSdk();
+    setState(() {
+      _dataResponse =
+          "SSL pinning ${enabled ? 'enabled' : 'disabled'} (SDK re-initialised)\n\n$_dataResponse";
+    });
   }
 
   Future<void> startHeadlessForPhoneAndEmail() async {
@@ -117,6 +138,17 @@ class _MyAppState extends State<MyApp> {
   void onHeadlessResult(dynamic result) {
     if (result['responseType'] == 'SDK_READY' && result['statusCode'] == 200) {
       initTrueCaller();
+    }
+    if (result['statusCode'] == 5004) {
+      // SSL pin validation failed: the SDK failed closed and sent nothing to
+      // the backend. Typical causes are a debugging proxy (Charles/Proxyman)
+      // or a corporate MITM. Turn the pinning switch off to continue testing.
+      final message =
+          result['response']?['errorMessage'] ?? 'SSL pin validation failed';
+      setState(() {
+        _dataResponse =
+            "SSL PINNING FAILED (5004): $message\n\n$_dataResponse";
+      });
     }
     setState(() {
       final newEntry = jsonEncode(result);
@@ -283,6 +315,17 @@ class _MyAppState extends State<MyApp> {
                           setState(() => _simBindingEnabled = v);
                           toggleSimBinding(v);
                         },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("SSL pinning"),
+                      CupertinoSwitch(
+                        value: _sslPinningEnabled,
+                        onChanged: toggleSslPinning,
                       ),
                     ],
                   ),

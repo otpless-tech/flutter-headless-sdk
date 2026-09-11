@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.otpless.longclaw.tc.OTScopeRequest
 import com.otpless.v2.android.sdk.dto.AuthEvent
 import com.otpless.v2.android.sdk.dto.OtplessResponse
+import com.otpless.v2.android.sdk.dto.OtplessSslKind
 import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.session.OtplessSessionManager
@@ -65,13 +66,25 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
             "initialize" -> {
                 val appId = call.argument<String>("appId") ?: ""
                 val loginUri = call.argument<String>("loginUri")
+                // Dart marshals OtplessSslPinning as "enabled" / "disabled";
+                // anything else (including absent) degrades to pinning off.
+                val sslKind: OtplessSslKind = when (call.argument<String>("sslPinning")) {
+                    "enabled" -> OtplessSslKind.SslEnabled
+                    else -> OtplessSslKind.SslDisabled
+                }
 
                 val mActivity = activity.get() ?: return run {
                     result.error("0", "init called before activity is attached", null)
                 }
                 result.success(null)
                 mActivity.lifecycleScope.launch(Dispatchers.IO) {
-                    OtplessSDK.initialize(appId = appId, activity = mActivity, loginUri = loginUri, this@OtplessFlutterHeadless::onOtplessResponseCallback)
+                    OtplessSDK.initialize(
+                        appId = appId,
+                        activity = mActivity,
+                        loginUri = loginUri,
+                        callback = this@OtplessFlutterHeadless::onOtplessResponseCallback,
+                        sslKind = sslKind
+                    )
                 }
             }
 

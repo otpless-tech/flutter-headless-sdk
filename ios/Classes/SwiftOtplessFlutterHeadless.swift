@@ -36,11 +36,20 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
         case "initialize":
             let args = call.arguments as! [String: Any]
             let appId = args["appId"] as! String
+            let loginUri = args["loginUri"] as? String
+            // Dart marshals OtplessSslPinning as "enabled" / "disabled";
+            // anything else (including absent) degrades to pinning off.
+            let sslKind: OtplessSslKind = (args["sslPinning"] as? String) == "enabled" ? .sslEnabled : .sslDisabled
             guard let viewController = Self.rootViewController() else {
                 result(nil)
                 return
             }
-            Otpless.shared.initialise(withAppId: appId, vc: viewController)
+            // Bind the response delegate before initialising so an early FAILED
+            // (e.g. 5004 pin failure) is not lost if the Dart side has not yet
+            // called setResponseCallback. Mirrors Android, which passes the
+            // callback into initialize.
+            Otpless.shared.setResponseDelegate(self)
+            Otpless.shared.initialise(withAppId: appId, loginUri: loginUri, vc: viewController, sslKind: sslKind)
             result(nil)
         case "setResponseCallback":
             Otpless.shared.setResponseDelegate(self)
