@@ -33,16 +33,12 @@ class Otpless {
   /// in the response callback and no auth request is sent.
   ///
   /// [loginUri] is the deep-link URI the native SDK returns to after OAuth
-  /// channels. When omitted the SDK derives `otpless.<appid>://otpless`.
-  ///
-  /// [timeout] is deprecated: neither native SDK ever read it and it is no
-  /// longer sent across the method channel.
+  /// channels. Defaults to `null`, in which case the SDK derives
+  /// `otpless.<appid>://otpless`.
   Future<void> initialize(
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
-    @Deprecated('timeout was never applied natively and will be removed')
-    double timeout = 30.0,
   }) async {
     await _otplessChannel.initialize(
       appId,

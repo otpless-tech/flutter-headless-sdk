@@ -28,8 +28,8 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
       if (call.method == "otpless_callback_event") {
         final json = call.arguments as String;
         final result = jsonDecode(json);
-        // The native side may emit before setResponseCallback has run (e.g. an
-        // early FAILED / 5004 right after initialize); never crash on that.
+        // setResponseCallback is expected before initialize; the null-safe call
+        // is just a guard so a stray event can never throw.
         _callback?.call(result);
       }
     });

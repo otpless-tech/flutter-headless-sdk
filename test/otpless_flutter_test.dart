@@ -55,7 +55,7 @@ void main() {
           .setMockMethodCallHandler(channel, null);
     });
 
-    test('default: pinning disabled, no loginUri, no timeout', () async {
+    test('default: pinning disabled, loginUri null', () async {
       await Otpless().initialize('APP_ID');
 
       expect(log, hasLength(1));
@@ -101,18 +101,6 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': 'myapp://otpless',
         'sslPinning': 'enabled',
-      });
-    });
-
-    test('deprecated timeout is accepted but never marshalled', () async {
-      // ignore: deprecated_member_use_from_same_package
-      await Otpless().initialize('APP_ID', timeout: 5);
-
-      expect(log.single.arguments, isNot(contains('timeout')));
-      expect(log.single.arguments, <String, dynamic>{
-        'appId': 'APP_ID',
-        'loginUri': null,
-        'sslPinning': 'disabled',
       });
     });
 

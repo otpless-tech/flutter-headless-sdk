@@ -24,14 +24,14 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.0` as of plugin 2.1.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.0` as of plugin 3.0.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
 - **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
 - **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 3.0.0` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
 
 | Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
 |---|---|---|
-| 2.1.0 | 2.0.1 | 3.0.0 |
+| 3.0.0 | 2.0.1 | 3.0.0 |
 | 2.0.0 | 0.9.0 | 2.3.2 |
 
 ## Platform support matrix
@@ -76,15 +76,13 @@ void initState() {
 }
 ```
 
-## `initialize` options (2.1.0+)
+## `initialize` options (3.0.0+)
 
 ```dart
 Future<void> initialize(
   String appId, {
   OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
   String? loginUri,
-  @Deprecated('timeout was never applied natively and will be removed')
-  double timeout = 30.0,
 });
 ```
 
@@ -92,7 +90,6 @@ Future<void> initialize(
 |---|---|---|
 | `sslPinning` | `OtplessSslPinning.disabled` | Opt-in SSL certificate pinning of the OTPLESS backend on both platforms. See [SSL pinning](#ssl-pinning). |
 | `loginUri` | `null` (SDK derives `otpless.<appid>://otpless`) | Deep-link URI the SDK returns to after OAuth channels. Forwarded to both native SDKs. |
-| `timeout` | `30.0` | **Deprecated.** Never read by either native SDK; no longer sent over the bridge. Remove it from your call site. |
 
 ## SSL pinning
 
@@ -358,9 +355,9 @@ override func application(_ app: UIApplication, open url: URL, options: [UIAppli
 `Otpless.shared.authorizeViaPasskey(withRequest:windowScene:)` is not exposed through this Flutter plugin. If your flow needs it, call it from Swift with a resolved `UIWindowScene`.
 
 
-# Migration from 2.0 to 2.1
+# Migration from 2.0 to 3.0
 
-No breaking changes. `initialize` gains two optional named parameters (`sslPinning`, `loginUri`) and deprecates `timeout`; drop `timeout:` from your call site to silence the deprecation. Your response handler may now receive `statusCode: 5004` when you opt in to pinning (see [SSL pinning](#ssl-pinning)).
+One breaking change: `initialize(..., timeout:)` is removed (it was never applied natively) — drop `timeout:` from your call site. `initialize` gains two optional named parameters (`sslPinning`, `loginUri`). Your response handler may now receive `statusCode: 5004` when you opt in to pinning (see [SSL pinning](#ssl-pinning)).
 
 # Migration from 1.x to 2.0
 
