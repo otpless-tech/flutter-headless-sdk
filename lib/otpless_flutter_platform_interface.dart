@@ -1,5 +1,6 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'models.dart';
 import 'otpless_flutter_method_channel.dart';
 
 abstract class OtplessFlutterPlatform extends PlatformInterface {
@@ -25,5 +26,15 @@ abstract class OtplessFlutterPlatform extends PlatformInterface {
 
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
+  }
+
+  /// Initialises the native SDK. See `Otpless.initialize` for the semantics
+  /// of [sslPinning] and [loginUri].
+  Future<void> initialize(
+    String appId, {
+    OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
+    String? loginUri,
+  }) {
+    throw UnimplementedError('initialize() has not been implemented.');
   }
 }

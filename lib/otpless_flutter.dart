@@ -2,6 +2,8 @@ import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/models.dart';
 
+export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning;
+
 class Otpless {
   final MethodChannelOtplessFlutter _otplessChannel =
       MethodChannelOtplessFlutter();
@@ -22,8 +24,27 @@ class Otpless {
     _otplessChannel.start(callback, jsonObject);
   }
 
-  Future<void> initialize(String appid, {double timeout = 30.0}) async {
-    _otplessChannel.initialize(appid, timeout);
+  /// Initialises the native OTPLESS SDK for [appId].
+  ///
+  /// [sslPinning] opts in to SSL certificate pinning of the OTPLESS backend on
+  /// both Android and iOS. It defaults to [OtplessSslPinning.disabled], so
+  /// existing integrations see no behaviour change. With pinning enabled, a
+  /// failed pin check surfaces as `responseType: "FAILED"`, `statusCode: 5004`
+  /// in the response callback and no auth request is sent.
+  ///
+  /// [loginUri] is the deep-link URI the native SDK returns to after OAuth
+  /// channels. Defaults to `null`, in which case the SDK derives
+  /// `otpless.<appid>://otpless`.
+  Future<void> initialize(
+    String appId, {
+    OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
+    String? loginUri,
+  }) async {
+    await _otplessChannel.initialize(
+      appId,
+      sslPinning: sslPinning,
+      loginUri: loginUri,
+    );
   }
 
   Future<void> setResponseCallback(OtplessResultCallback callback) async {

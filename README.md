@@ -24,16 +24,21 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 0.9.0`, `OtplessBM/Core 2.3.2`) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.0` as of plugin 3.0.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
-- **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The 0.9.0 Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
-- **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 2.3.2` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
+- **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
+- **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 3.0.0` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
+
+| Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
+|---|---|---|
+| 3.0.0 | 2.0.1 | 3.0.0 |
+| 2.0.0 | 0.9.0 | 2.3.2 |
 
 ## Platform support matrix
 
 | Dart method | Android | iOS |
 |---|:---:|:---:|
-| `initialize` | ✅ | ✅ |
+| `initialize` (`sslPinning`, `loginUri` — new in 2.1) | ✅ | ✅ |
 | `setResponseCallback` | ✅ | ✅ |
 | `setDevLogging` | ✅ | ✅ |
 | `start` | ✅ | ✅ |
@@ -70,6 +75,46 @@ void initState() {
   _otplessHeadlessPlugin.setResponseCallback(onOtplessResponse);
 }
 ```
+
+## `initialize` options (3.0.0+)
+
+```dart
+Future<void> initialize(
+  String appId, {
+  OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
+  String? loginUri,
+});
+```
+
+| Parameter | Default | Notes |
+|---|---|---|
+| `sslPinning` | `OtplessSslPinning.disabled` | Opt-in SSL certificate pinning of the OTPLESS backend on both platforms. See [SSL pinning](#ssl-pinning). |
+| `loginUri` | `null` (SDK derives `otpless.<appid>://otpless`) | Deep-link URI the SDK returns to after OAuth channels. Forwarded to both native SDKs. |
+
+## SSL pinning
+
+Pinning is **off by default**. Turn it on at initialisation time:
+
+```dart
+_otplessHeadlessPlugin.initialize(
+  "YOUR_APP_ID",
+  sslPinning: OtplessSslPinning.enabled,
+);
+```
+
+With pinning enabled the native SDKs (Android `otpless-headless-sdk 2.0.1`, iOS `OtplessBM 3.0.0`) validate the certificate chain of the OTPLESS backend (`sigma.otpless.app`) against a signed remote pin manifest before any authentication request is sent. If validation fails the SDK **fails closed**: no request leaves the device and your response callback receives
+
+```json
+{
+  "responseType": "FAILED",
+  "statusCode": 5004,
+  "response": { "errorCode": "5004", "errorMessage": "SSL pin validation failed" }
+}
+```
+
+Common causes are a debugging proxy (Charles, Proxyman, mitmproxy) or a corporate TLS-inspecting gateway. Do not enable pinning in builds you intend to inspect with a proxy. Pinning cannot be toggled without calling `initialize` again.
+
+Google Play Integrity (Android) needs no plugin configuration: it is internal to `otpless-headless-sdk 2.0.1` and activates with the dependency bump. Your app must be distributed through Google Play and linked to a Play Console project for attestation to succeed; iOS has no equivalent.
 
 # Initiate Authentication
 ## Phone Auth
@@ -112,8 +157,13 @@ void onOtplessResponse(dynamic result) {
       break;
 
     case "FAILED":
-      debugPrint("SDK initialization failed");
-      // Handle SDK initialization failure
+      // Terminal SDK-level failure. See "SDK-level FAILED codes" below.
+      final code = result["statusCode"];
+      if (code == 5004) {
+        debugPrint("SSL pin validation failed; nothing was sent to the backend");
+      } else {
+        debugPrint("SDK initialization failed: ${result["response"]}");
+      }
       break;
 
     case "INITIATE":
@@ -201,6 +251,15 @@ void onOtplessResponse(dynamic result) {
 }
 ```
 
+
+## SDK-level `FAILED` codes
+
+These arrive with `responseType: "FAILED"`; `statusCode` and `response.errorCode` carry the same value.
+
+| `statusCode` | `errorMessage` | Meaning | Platforms |
+|---|---|---|---|
+| `5003` | `Failed to initialize the SDK` | `initialize` could not complete (network, bad `appId`, etc.). Retry `initialize`. | Android, iOS |
+| `5004` | `SSL pin validation failed` | `sslPinning` was `enabled` and the backend certificate did not match the pinned set. The SDK fails closed; no auth request was sent. Check for a MITM proxy, or initialise with `OtplessSslPinning.disabled`. | Android, iOS (2.1.0+) |
 
 # Android manifest update
 Add Network Security Config inside your android/app/src/main/AndroidManifest.xml file into your <application> code block (Only required if you are using the SNA feature):
@@ -295,6 +354,10 @@ override func application(_ app: UIApplication, open url: URL, options: [UIAppli
 
 `Otpless.shared.authorizeViaPasskey(withRequest:windowScene:)` is not exposed through this Flutter plugin. If your flow needs it, call it from Swift with a resolved `UIWindowScene`.
 
+
+# Migration from 2.0 to 3.0
+
+One breaking change: `initialize(..., timeout:)` is removed (it was never applied natively) — drop `timeout:` from your call site. `initialize` gains two optional named parameters (`sslPinning`, `loginUri`). Your response handler may now receive `statusCode: 5004` when you opt in to pinning (see [SSL pinning](#ssl-pinning)).
 
 # Migration from 1.x to 2.0
 
