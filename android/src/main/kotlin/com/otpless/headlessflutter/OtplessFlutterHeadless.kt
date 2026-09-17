@@ -81,8 +81,8 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 mActivity.lifecycleScope.launch(Dispatchers.IO) {
                     // Wrapper attribution: tells the native SDK this session came
                     // through the Flutter plugin, so device telemetry reports
-                    // platform = "otpless-headless-lite(flutter)" instead of the
-                    // default "otpless-headless-lite(android)". Must be set before
+                    // platform = "otpless-headless-sdk(flutter)" instead of the
+                    // default "otpless-headless-sdk(android)". Must be set before
                     // initialize, which is what emits the event. Hardcoded — not a
                     // merchant-facing option.
                     OtplessSDK.buildPlatform = BuildPlatform("flutter")
