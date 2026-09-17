@@ -49,6 +49,12 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             // called setResponseCallback. Mirrors Android, which passes the
             // callback into initialize.
             Otpless.shared.setResponseDelegate(self)
+            // Wrapper attribution: tells the native SDK this session came through
+            // the Flutter plugin, so device telemetry reports
+            // platform = "otpless-headless(flutter)" instead of the default
+            // "otpless-headless(ios)". Must be set before initialise, which is
+            // what emits the event. Hardcoded — not a merchant-facing option.
+            Otpless.shared.setBuildPlatform("flutter")
             Otpless.shared.initialise(withAppId: appId, loginUri: loginUri, vc: viewController, sslKind: sslKind)
             result(nil)
         case "setResponseCallback":

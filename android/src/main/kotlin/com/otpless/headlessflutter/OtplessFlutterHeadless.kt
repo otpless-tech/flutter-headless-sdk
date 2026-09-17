@@ -13,6 +13,7 @@ import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.session.OtplessSessionManager
 import com.otpless.v2.android.sdk.session.OtplessSessionState
+import com.otpless.v2.android.sdk.utils.BuildPlatform
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -78,6 +79,13 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 }
                 result.success(null)
                 mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    // Wrapper attribution: tells the native SDK this session came
+                    // through the Flutter plugin, so device telemetry reports
+                    // platform = "otpless-headless-lite(flutter)" instead of the
+                    // default "otpless-headless-lite(android)". Must be set before
+                    // initialize, which is what emits the event. Hardcoded — not a
+                    // merchant-facing option.
+                    OtplessSDK.buildPlatform = BuildPlatform("flutter")
                     OtplessSDK.initialize(
                         appId = appId,
                         activity = mActivity,

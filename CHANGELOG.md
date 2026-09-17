@@ -1,3 +1,9 @@
+## 3.0.1 (17th September 2026)
+### Changes
+- Wrapper attribution: the plugin now declares itself to the native SDKs at `initialize`, so backend telemetry attributes the session to the Flutter wrapper rather than to a plain native integration. The device event reports `platform = "otpless-headless-lite(flutter)"` on Android and `platform = "otpless-headless(flutter)"` on iOS.
+- The value is hardcoded to `"flutter"` and is **not** merchant-facing: there is no new Dart parameter, no change to the `initialize` method-channel payload, and no behaviour change in any auth flow. Purely additive; no migration needed from 3.0.0.
+- Requires `OtplessBM/Core 3.0.1` (iOS) and `otpless-headless-sdk 2.0.1` (Android, unchanged).
+
 ## 3.0.0 (16th September 2026)
 ### Breaking
 - `initialize(..., timeout:)` has been removed. It was never read by either native SDK and was not sent over the method channel; drop `timeout:` from your call site.

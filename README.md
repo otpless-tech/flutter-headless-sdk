@@ -24,13 +24,14 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.0` as of plugin 3.0.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.1` as of plugin 3.0.1) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
 - **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
-- **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 3.0.0` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
+- **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 3.0.1` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
 
 | Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
 |---|---|---|
+| 3.0.1 | 2.0.1 | 3.0.1 |
 | 3.0.0 | 2.0.1 | 3.0.0 |
 | 2.0.0 | 0.9.0 | 2.3.2 |
 

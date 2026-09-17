@@ -4,7 +4,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'otpless_headless_flutter'
-  s.version          = '3.0.0'
+  s.version          = '3.0.1'
   s.summary          = 'Standalone SDK for Otpless Headless functionality.'
   s.description      = <<-DESC
   otpless_headless_flutter is a modern iOS SDK built for Flutter with Swift that provides Otpless' Headless capabilities. Get your user authentication sorted in just five minutes by integrating of Otpless sdk.
@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
   s.source           = { :git => 'https://github.com/otpless-tech/flutter-headless-sdk.git', :tag => s.version.to_s }
   s.source_files = 'Classes/**/*'
   s.dependency 'Flutter'
-  s.dependency 'OtplessBM/Core', '3.0.0'
+  s.dependency 'OtplessBM/Core', '3.0.1'
   s.ios.deployment_target = '13.0'
 
   s.swift_versions = ['5.5', '5.6', '5.7', '5.8', '5.9']
