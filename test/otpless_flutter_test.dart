@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:otpless_headless_flutter/otpless_flutter.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_platform_interface.dart';
+import 'package:otpless_headless_flutter/src/version.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 class MockOtplessFlutterPlatform
@@ -41,6 +42,12 @@ void main() {
     const channel = MethodChannel('otpless_headless_flutter');
     final List<MethodCall> log = <MethodCall>[];
 
+    // NOT the on-device value. `flutter test` runs on the host VM, where both
+    // Platform.isAndroid and Platform.isIOS are false, so initialize sends the
+    // defensive bare form. On a real device the token is
+    // 'flutter-android-<version>' / 'flutter-ios-<version>'.
+    const String hostBuildPlatform = 'flutter-$otplessPluginVersion';
+
     setUp(() {
       log.clear();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -64,6 +71,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'buildPlatform': hostBuildPlatform,
       });
     });
 
@@ -76,6 +84,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'enabled',
+        'buildPlatform': hostBuildPlatform,
       });
     });
 
@@ -87,6 +96,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'buildPlatform': hostBuildPlatform,
       });
     });
 
@@ -101,6 +111,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': 'myapp://otpless',
         'sslPinning': 'enabled',
+        'buildPlatform': hostBuildPlatform,
       });
     });
 
@@ -108,6 +119,35 @@ void main() {
       // Compile-time check: the enum resolves via the main library import.
       expect(OtplessSslPinning.values,
           [OtplessSslPinning.disabled, OtplessSslPinning.enabled]);
+    });
+
+    group('buildPlatform token shape', () {
+      test('is always sent under the buildPlatform key', () async {
+        await Otpless().initialize('APP_ID');
+
+        final arguments = log.single.arguments as Map;
+        expect(arguments.containsKey('buildPlatform'), isTrue);
+        expect(arguments['buildPlatform'], isA<String>());
+      });
+
+      test('starts with "flutter-" and ends with the plugin version', () async {
+        await Otpless().initialize('APP_ID');
+
+        final token = (log.single.arguments as Map)['buildPlatform'] as String;
+        expect(token, startsWith('flutter-'));
+        expect(token, endsWith(otplessPluginVersion));
+        expect(token, isNot(equals('flutter')),
+            reason: 'the bare legacy token must no longer be sent');
+      });
+
+      test('on the host VM it is the defensive bare form (not a device token)',
+          () async {
+        await Otpless().initialize('APP_ID');
+
+        final token = (log.single.arguments as Map)['buildPlatform'] as String;
+        // Host-only expectation: flutter test is neither Android nor iOS.
+        expect(token, 'flutter-$otplessPluginVersion');
+      });
     });
   });
 }

@@ -6,9 +6,30 @@ import 'package:flutter/services.dart';
 import 'package:otpless_headless_flutter/models.dart';
 
 import 'otpless_flutter_platform_interface.dart';
+import 'src/version.dart';
 
 typedef OtplessResultCallback = void Function(dynamic);
 typedef OtplessSimEventListener = void Function(List<Map<String, dynamic>>);
+
+/// Wrapper-attribution token sent to the native SDKs at `initialize`.
+///
+/// Computed here, in Dart, so [otplessPluginVersion] is the single source of
+/// truth: the Kotlin and Swift bridges only forward whatever arrives over the
+/// method channel, instead of each hardcoding a version that would drift on
+/// every release.
+///
+/// Emitted by the native device-telemetry event as:
+/// * Android — `otpless-headless-sdk(flutter-android-<pluginVersion>)`
+/// * iOS — `otpless-headless(flutter-ios-<pluginVersion>)`
+///
+/// The plugin only supports Android and iOS; the bare `flutter-<version>` form
+/// is a defensive fallback that also shows up under `flutter test`, which runs
+/// on the host where both [Platform.isAndroid] and [Platform.isIOS] are false.
+String _buildPlatformToken() {
+  if (Platform.isAndroid) return 'flutter-android-$otplessPluginVersion';
+  if (Platform.isIOS) return 'flutter-ios-$otplessPluginVersion';
+  return 'flutter-$otplessPluginVersion';
+}
 
 /// An implementation of [OtplessFlutterPlatform] that uses method channels.
 class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
@@ -59,6 +80,9 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
       'appId': appId,
       'loginUri': loginUri,
       'sslPinning': sslPinning.name,
+      // Internal channel key, not merchant-facing API: there is no Dart
+      // parameter for this. See [_buildPlatformToken].
+      'buildPlatform': _buildPlatformToken(),
     });
   }
 
