@@ -11,4 +11,4 @@
 /// `test/plugin_version_test.dart` parses `pubspec.yaml` and fails if this
 /// constant falls out of sync, so a forgotten bump breaks CI rather than
 /// shipping a wrong token.
-const String otplessPluginVersion = '3.0.1';
+const String otplessPluginVersion = '3.0.0';
