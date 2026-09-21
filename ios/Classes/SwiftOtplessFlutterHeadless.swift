@@ -40,6 +40,14 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             // Dart marshals OtplessSslPinning as "enabled" / "disabled";
             // anything else (including absent) degrades to pinning off.
             let sslKind: OtplessSslKind = (args["sslPinning"] as? String) == "enabled" ? .sslEnabled : .sslDisabled
+            // Wrapper attribution, computed in Dart (which owns the single source
+            // of truth for the plugin version) and arriving as
+            // "flutter-ios-<pluginVersion>". This bridge is a dumb forwarder; the
+            // literal fallback covers an older Dart layer that does not send the
+            // key, so the token can never be blank.
+            let trimmedBuildPlatform = (args["buildPlatform"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let buildPlatform = trimmedBuildPlatform.isEmpty ? "flutter-ios" : trimmedBuildPlatform
             guard let viewController = Self.rootViewController() else {
                 result(nil)
                 return
@@ -49,6 +57,12 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             // called setResponseCallback. Mirrors Android, which passes the
             // callback into initialize.
             Otpless.shared.setResponseDelegate(self)
+            // Tells the native SDK this session came through the Flutter plugin, so
+            // device telemetry reports
+            // platform = "otpless-headless(flutter-ios-3.0.0)" instead of the
+            // default "otpless-headless(ios)". Must be set before initialise, which
+            // is what emits the event. Not a merchant-facing option.
+            Otpless.shared.setBuildPlatform(buildPlatform)
             Otpless.shared.initialise(withAppId: appId, loginUri: loginUri, vc: viewController, sslKind: sslKind)
             result(nil)
         case "setResponseCallback":

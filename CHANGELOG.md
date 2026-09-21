@@ -1,4 +1,4 @@
-## 3.0.0 (16th September 2026)
+## 3.0.0 (21st September 2026)
 ### Breaking
 - `initialize(..., timeout:)` has been removed. It was never read by either native SDK and was not sent over the method channel; drop `timeout:` from your call site.
 
@@ -9,10 +9,12 @@
 
 ### Changes
 - Android: bump `otpless-headless-sdk` `0.9.0` → `2.0.1`.
-- iOS: bump `OtplessBM/Core` `2.3.2` → `3.0.0`; production host is now `sigma.otpless.app`.
+- iOS: bump `OtplessBM/Core` `2.3.2` → `3.0.1`; production host is now `sigma.otpless.app`.
 - iOS: the response delegate is bound inside `initialize` (parity with Android), so a `FAILED` emitted before `setResponseCallback` is no longer dropped.
 - Dart: the response-callback dispatcher is null-safe; a native event arriving before `setResponseCallback` no longer throws.
 - Podspec `s.version` now tracks `pubspec.yaml` (was stuck at `0.0.1`).
+- Wrapper attribution: the plugin now declares itself to the native SDKs at `initialize`, so backend telemetry attributes the session to the Flutter wrapper rather than to a plain native integration. The device event reports `platform = "otpless-headless-sdk(flutter-android-3.0.0)"` on Android and `platform = "otpless-headless(flutter-ios-3.0.0)"` on iOS.
+- The attribution token embeds **this plugin's own version**, so telemetry distinguishes both the platform and the plugin release that produced a session. It is computed in Dart from a single internal constant kept in lock-step with `pubspec.yaml` (a unit test fails the build if the two drift); the Kotlin and Swift bridges only forward it. It is **not** merchant-facing: no new Dart parameter, and the only change to the `initialize` method-channel payload is the internal `buildPlatform` key.
 
 ## 2.0.0 (27th July 2026)
 ### Breaking

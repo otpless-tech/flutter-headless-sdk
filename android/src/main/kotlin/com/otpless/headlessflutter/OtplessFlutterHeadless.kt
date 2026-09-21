@@ -13,6 +13,7 @@ import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.session.OtplessSessionManager
 import com.otpless.v2.android.sdk.session.OtplessSessionState
+import com.otpless.v2.android.sdk.utils.BuildPlatform
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
@@ -72,12 +73,28 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                     "enabled" -> OtplessSslKind.SslEnabled
                     else -> OtplessSslKind.SslDisabled
                 }
+                // Wrapper attribution, computed in Dart (which owns the single
+                // source of truth for the plugin version) and arriving as
+                // "flutter-android-<pluginVersion>". This bridge is a dumb
+                // forwarder; the literal fallback covers an older Dart layer that
+                // does not send the key, so the token can never be blank.
+                val buildPlatform = call.argument<String>("buildPlatform")
+                    ?.trim()
+                    ?.takeIf { it.isNotEmpty() }
+                    ?: "flutter-android"
 
                 val mActivity = activity.get() ?: return run {
                     result.error("0", "init called before activity is attached", null)
                 }
                 result.success(null)
                 mActivity.lifecycleScope.launch(Dispatchers.IO) {
+                    // Tells the native SDK this session came through the Flutter
+                    // plugin, so device telemetry reports
+                    // platform = "otpless-headless-sdk(flutter-android-3.0.0)"
+                    // instead of the default "otpless-headless-sdk(android)". Must
+                    // be set before initialize, which is what emits the event. Not a
+                    // merchant-facing option.
+                    OtplessSDK.buildPlatform = BuildPlatform(buildPlatform)
                     OtplessSDK.initialize(
                         appId = appId,
                         activity = mActivity,
