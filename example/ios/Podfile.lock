@@ -1,6 +1,6 @@
 PODS:
   - Flutter (1.0.0)
-  - otpless_headless_flutter (3.0.0):
+  - otpless_headless_flutter (3.0.1):
     - Flutter
     - OtplessBM/Core (= 3.0.1)
   - OtplessBM/Core (3.0.1):
@@ -24,10 +24,10 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Flutter: 71a624a5bc0c04062bf19101d501e466baf2fb47
-  otpless_headless_flutter: abef7b885b9bae7d1d80b75a90f269351bd24b33
+  otpless_headless_flutter: 59aa8894829fa76f1d51e7b639b0c99976c4c35a
   OtplessBM: d7a2ca149896ba511312d7ecbf9694015ca094a6
   OtplessEventIO: 4840f3d07db6675745e750df20c00bc687747599
 
-PODFILE CHECKSUM: a938cb79d452854fa9f13c14ded5e356e38f0fc7
+PODFILE CHECKSUM: 0dbd5a87e0ace00c9610d2037ac22083a01f861d
 
 COCOAPODS: 1.16.2

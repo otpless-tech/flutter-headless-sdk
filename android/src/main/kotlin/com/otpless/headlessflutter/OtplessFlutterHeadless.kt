@@ -90,7 +90,7 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 mActivity.lifecycleScope.launch(Dispatchers.IO) {
                     // Tells the native SDK this session came through the Flutter
                     // plugin, so device telemetry reports
-                    // platform = "otpless-headless-sdk(flutter-android-3.0.0)"
+                    // platform = "otpless-headless-sdk(flutter-android-<plugin-version>)"
                     // instead of the default "otpless-headless-sdk(android)". Must
                     // be set before initialize, which is what emits the event. Not a
                     // merchant-facing option.

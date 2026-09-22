@@ -1,3 +1,11 @@
+## 3.0.1 (22nd September 2026)
+### Changes
+- iOS: bump `OtplessBM/Core` `3.0.0` → `3.0.1`.
+- iOS: the podspec `s.version` is now `3.0.1`, matching `pubspec.yaml`. The `3.0.0` release published a podspec whose `s.version` and `OtplessBM/Core` pin were both `3.0.0`; the `3.0.0` entry below has been corrected to reflect what actually shipped.
+- The wrapper-attribution token follows the bump: telemetry now reports `platform = "otpless-headless-sdk(flutter-android-3.0.1)"` on Android and `platform = "otpless-headless(flutter-ios-3.0.1)"` on iOS.
+
+No Dart API changes. Android `otpless-headless-sdk` stays at `2.0.1`.
+
 ## 3.0.0 (21st September 2026)
 ### Breaking
 - `initialize(..., timeout:)` has been removed. It was never read by either native SDK and was not sent over the method channel; drop `timeout:` from your call site.
@@ -9,7 +17,7 @@
 
 ### Changes
 - Android: bump `otpless-headless-sdk` `0.9.0` → `2.0.1`.
-- iOS: bump `OtplessBM/Core` `2.3.2` → `3.0.1`; production host is now `sigma.otpless.app`.
+- iOS: bump `OtplessBM/Core` `2.3.2` → `3.0.0`; production host is now `sigma.otpless.app`.
 - iOS: the response delegate is bound inside `initialize` (parity with Android), so a `FAILED` emitted before `setResponseCallback` is no longer dropped.
 - Dart: the response-callback dispatcher is null-safe; a native event arriving before `setResponseCallback` no longer throws.
 - Podspec `s.version` now tracks `pubspec.yaml` (was stuck at `0.0.1`).

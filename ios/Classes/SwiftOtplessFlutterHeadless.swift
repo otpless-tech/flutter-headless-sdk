@@ -59,7 +59,7 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
             Otpless.shared.setResponseDelegate(self)
             // Tells the native SDK this session came through the Flutter plugin, so
             // device telemetry reports
-            // platform = "otpless-headless(flutter-ios-3.0.0)" instead of the
+            // platform = "otpless-headless(flutter-ios-<plugin-version>)" instead of the
             // default "otpless-headless(ios)". Must be set before initialise, which
             // is what emits the event. Not a merchant-facing option.
             Otpless.shared.setBuildPlatform(buildPlatform)
