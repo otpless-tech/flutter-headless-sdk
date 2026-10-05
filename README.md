@@ -41,7 +41,9 @@ The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.1`
 From plugin **3.1.0** the iOS side ships both a podspec and a Swift package, so either dependency manager works. You do not need to choose explicitly: Flutter uses whichever your app is set up for.
 
 - **CocoaPods** — nothing to do. This is still the default for most Flutter apps.
-- **Swift Package Manager** — requires **Flutter 3.44+**, where SPM is enabled by default. On older versions that support it, enable with `flutter config --enable-swift-package-manager`.
+- **Swift Package Manager** — requires **Flutter 3.44+**, where SPM is enabled by default. On older versions that support it, enable with `flutter config --enable-swift-package-manager`. Verified on Flutter 3.47.6 with Xcode 26.6.
+
+CocoaPods support in Flutter is in maintenance mode until 2 December 2026, so moving to SPM is the forward path even though both work today.
 
 > Plugin versions before 3.1.0 shipped no `Package.swift`. Flutter does **not** fall back to CocoaPods for a plugin that lacks one, so on an SPM-migrated app those versions fail to integrate entirely. If you are on SPM, upgrade to 3.1.0 or later.
 

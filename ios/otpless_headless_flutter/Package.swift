@@ -24,6 +24,11 @@ let package = Package(
         ),
     ],
     dependencies: [
+        // The Flutter framework itself. Flutter symlinks this plugin into its
+        // generated `.packages` directory next to a `FlutterFramework`
+        // package, which is what makes the relative path resolve; the path is
+        // only valid inside a Flutter build, not a bare `swift build`.
+        .package(name: "FlutterFramework", path: "../FlutterFramework"),
         // Mirrors the podspec's exact pin on `OtplessBM/Core`. SPM has no
         // subspecs: upstream exposes the whole module as one `OtplessBM`
         // product, so there is nothing narrower to depend on here.
@@ -36,6 +41,10 @@ let package = Package(
         .target(
             name: "otpless_headless_flutter",
             dependencies: [
+                .product(
+                    name: "FlutterFramework",
+                    package: "FlutterFramework"
+                ),
                 .product(
                     name: "OtplessBM",
                     package: "otpless-headless-iOS-sdk"

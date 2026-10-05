@@ -7,6 +7,7 @@
 - iOS sources moved from `ios/Classes/` to `ios/otpless_headless_flutter/Sources/otpless_headless_flutter/` (the layout SPM requires). `s.source_files` in the podspec was repointed at the same directory.
 - The Objective-C registration shim (`ios/Classes/OtplessFlutterHeadless.{h,m}`) was removed: SwiftPM does not accept Objective-C and Swift sources in one target, and the shim relied on the CocoaPods-generated `-Swift.h` umbrella header, which does not exist under SPM. The Swift class `SwiftOtplessFlutterHeadless` is renamed to `OtplessFlutterHeadless` and is now the plugin class directly, so `pluginClass` is unchanged and registration is unaffected on both build systems.
 - `WhatsAppHandler.swift` now imports `Flutter` explicitly. It previously picked `FlutterResult` up implicitly through the Objective-C umbrella header.
+- `Package.swift` declares the `FlutterFramework` dependency required by Flutter's plugin template. Verified end-to-end on Flutter 3.47.6 / Xcode 26.6: the example app runs on an iOS simulator with the plugin and `OtplessBM` linked through SwiftPM rather than CocoaPods.
 
 ### Known limitations
 - Under SPM the plugin depends on the whole `OtplessBM` product, because Swift packages have no equivalent of the `OtplessBM/Core` subspec. The `OtplessBM/GoogleSupport` and `OtplessBM/FacebookSupport` subspecs have **no SPM equivalent**: if you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK` on an SPM project, add the Google or Facebook SDK to your app directly. CocoaPods users are unaffected.
