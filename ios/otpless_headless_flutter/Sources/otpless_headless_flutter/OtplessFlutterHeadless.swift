@@ -3,13 +3,13 @@ import UIKit
 import OtplessBM
 
 
-public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
+public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
     
     private var otplessTask: Task<Void, Never>? = nil
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "otpless_headless_flutter", binaryMessenger: registrar.messenger())
-        let instance = SwiftOtplessFlutterHeadless()
+        let instance = OtplessFlutterHeadless()
         registrar.addMethodCallDelegate(instance, channel: channel)
         Task { @MainActor in
             ChannelManager.shared.setMethodChannel(channel)
@@ -283,7 +283,7 @@ public class SwiftOtplessFlutterHeadless: NSObject, FlutterPlugin {
     }
 }
 
-extension SwiftOtplessFlutterHeadless: OtplessResponseDelegate {
+extension OtplessFlutterHeadless: OtplessResponseDelegate {
     public func onResponse(_ response: OtplessBM.OtplessResponse) {
         let flutterResponse: [String: Any?] = [
             "statusCode": response.statusCode,
@@ -299,7 +299,7 @@ extension SwiftOtplessFlutterHeadless: OtplessResponseDelegate {
     }
 }
 
-extension SwiftOtplessFlutterHeadless: OtplessLoggerDelegate {
+extension OtplessFlutterHeadless: OtplessLoggerDelegate {
     public func log(message: String, type: OtplessBM.LogType) {
         print("Otpless Log of type : \(type)\n\n\(message)")
     }

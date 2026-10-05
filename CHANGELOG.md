@@ -1,3 +1,18 @@
+## 3.1.0 (5th October 2026)
+### Features
+- **Swift Package Manager support.** The iOS side now ships `ios/otpless_headless_flutter/Package.swift`, so apps that have migrated to SPM can use this plugin. Flutter does not fall back to CocoaPods for plugins without a Swift package, so on SPM-migrated projects the previous releases could not be integrated at all.
+- CocoaPods remains fully supported. The podspec and the Swift package build the same sources, so no action is needed if your app still uses CocoaPods.
+
+### Changes
+- iOS sources moved from `ios/Classes/` to `ios/otpless_headless_flutter/Sources/otpless_headless_flutter/` (the layout SPM requires). `s.source_files` in the podspec was repointed at the same directory.
+- The Objective-C registration shim (`ios/Classes/OtplessFlutterHeadless.{h,m}`) was removed: SwiftPM does not accept Objective-C and Swift sources in one target, and the shim relied on the CocoaPods-generated `-Swift.h` umbrella header, which does not exist under SPM. The Swift class `SwiftOtplessFlutterHeadless` is renamed to `OtplessFlutterHeadless` and is now the plugin class directly, so `pluginClass` is unchanged and registration is unaffected on both build systems.
+- `WhatsAppHandler.swift` now imports `Flutter` explicitly. It previously picked `FlutterResult` up implicitly through the Objective-C umbrella header.
+
+### Known limitations
+- Under SPM the plugin depends on the whole `OtplessBM` product, because Swift packages have no equivalent of the `OtplessBM/Core` subspec. The `OtplessBM/GoogleSupport` and `OtplessBM/FacebookSupport` subspecs have **no SPM equivalent**: if you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK` on an SPM project, add the Google or Facebook SDK to your app directly. CocoaPods users are unaffected.
+
+Native SDK versions are unchanged: Android `otpless-headless-sdk 2.0.1`, iOS `OtplessBM 3.0.1`.
+
 ## 3.0.1 (22nd September 2026)
 ### Changes
 - iOS: bump `OtplessBM/Core` `3.0.0` → `3.0.1`.
