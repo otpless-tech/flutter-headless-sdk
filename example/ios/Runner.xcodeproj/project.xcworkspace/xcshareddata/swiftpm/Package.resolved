@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "otpless-event-io-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/otpless-tech/otpless-event-io-ios.git",
+      "state" : {
+        "revision" : "73a40cfc05550da4e85373c0ecbe93a2529954a7",
+        "version" : "1.0.0"
+      }
+    },
+    {
+      "identity" : "otpless-headless-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/otpless-tech/otpless-headless-iOS-sdk.git",
+      "state" : {
+        "revision" : "1503875a3b8951f1e3cbb7a3afae7404cce88a32",
+        "version" : "3.0.1"
+      }
+    }
+  ],
+  "version" : 2
+}

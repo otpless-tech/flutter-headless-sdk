@@ -24,16 +24,32 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.1` as of plugin 3.0.1) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.1` as of plugin 3.1.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
 - **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
-- **iOS**: deployment target **13.0+** (unchanged). CocoaPods with `OtplessBM/Core 3.0.1` on the trunk. If you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
+- **iOS**: deployment target **13.0+** (unchanged). Both CocoaPods and Swift Package Manager are supported from plugin 3.1.0 — see [iOS dependency managers](#ios-dependency-managers-cocoapods-and-swift-package-manager). On CocoaPods, if you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
 
 | Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
 |---|---|---|
+| 3.1.0 | 2.0.1 | 3.0.1 |
 | 3.0.1 | 2.0.1 | 3.0.1 |
 | 3.0.0 | 2.0.1 | 3.0.0 |
 | 2.0.0 | 0.9.0 | 2.3.2 |
+
+## iOS dependency managers (CocoaPods and Swift Package Manager)
+
+From plugin **3.1.0** the iOS side ships both a podspec and a Swift package, so either dependency manager works. You do not need to choose explicitly: Flutter uses whichever your app is set up for.
+
+- **CocoaPods** — nothing to do. This is still the default for most Flutter apps.
+- **Swift Package Manager** — requires **Flutter 3.44+**, where SPM is enabled by default. On older versions that support it, enable with `flutter config --enable-swift-package-manager`. Verified on Flutter 3.47.6 with Xcode 26.6.
+
+CocoaPods support in Flutter is in maintenance mode until 2 December 2026, so moving to SPM is the forward path even though both work today.
+
+> Plugin versions before 3.1.0 shipped no `Package.swift`. Flutter does **not** fall back to CocoaPods for a plugin that lacks one, so on an SPM-migrated app those versions fail to integrate entirely. If you are on SPM, upgrade to 3.1.0 or later.
+
+### Google and Facebook channels on SPM
+
+Swift packages have no equivalent of a CocoaPods subspec. Under SPM the plugin depends on the single `OtplessBM` product, and the `OtplessBM/GoogleSupport` and `OtplessBM/FacebookSupport` subspecs are **not available**. If your app uses `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK` on an SPM project, add the Google or Facebook SDK to your app target yourself; the rest of the plugin is unaffected. CocoaPods users should keep using the subspecs as before.
 
 ## Platform support matrix
 
@@ -338,6 +354,8 @@ func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>)
 ## Facebook SDK (only if using `FACEBOOK_SDK` channel)
 
 Add `OtplessBM/FacebookSupport` subspec to `ios/Podfile`. Then wire it up in `AppDelegate.swift`:
+
+> **Swift Package Manager:** this subspec is CocoaPods-only. On an SPM project, add `FBSDKCoreKit` and `FBSDKLoginKit` to your app target directly — see [Google and Facebook channels on SPM](#google-and-facebook-channels-on-spm).
 
 ```swift
 override func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
