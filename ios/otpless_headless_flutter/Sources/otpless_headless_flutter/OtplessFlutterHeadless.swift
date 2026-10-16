@@ -40,6 +40,8 @@ public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
             // Dart marshals OtplessSslPinning as "enabled" / "disabled";
             // anything else (including absent) degrades to pinning off.
             let sslKind: OtplessSslKind = (args["sslPinning"] as? String) == "enabled" ? .sslEnabled : .sslDisabled
+            // args["config"] (OtplessConfigKey) is deliberately not read: its only key,
+            // disableOtpAutoRead, targets Android's SMS / WhatsApp auto-read, which iOS lacks.
             // Wrapper attribution, computed in Dart (which owns the single source
             // of truth for the plugin version) and arriving as
             // "flutter-ios-<pluginVersion>". This bridge is a dumb forwarder; the

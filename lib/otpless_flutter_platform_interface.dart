@@ -29,11 +29,12 @@ abstract class OtplessFlutterPlatform extends PlatformInterface {
   }
 
   /// Initialises the native SDK. See `Otpless.initialize` for the semantics
-  /// of [sslPinning] and [loginUri].
+  /// of [sslPinning], [loginUri] and [config].
   Future<void> initialize(
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) {
     throw UnimplementedError('initialize() has not been implemented.');
   }

@@ -17,6 +17,7 @@ class MockOtplessFlutterPlatform
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) async {}
 }
 
@@ -71,6 +72,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -84,6 +86,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'enabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -96,6 +99,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -111,8 +115,28 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': 'myapp://otpless',
         'sslPinning': 'enabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
+    });
+
+    test('config: disableOtpAutoRead marshals by enum name', () async {
+      await Otpless().initialize(
+        'APP_ID',
+        config: {OtplessConfigKey.disableOtpAutoRead: 'true'},
+      );
+
+      expect(log.single.arguments, <String, dynamic>{
+        'appId': 'APP_ID',
+        'loginUri': null,
+        'sslPinning': 'disabled',
+        'config': <String, String>{'disableOtpAutoRead': 'true'},
+        'buildPlatform': hostBuildPlatform,
+      });
+    });
+
+    test('OtplessConfigKey is exported from otpless_flutter.dart', () {
+      expect(OtplessConfigKey.values, [OtplessConfigKey.disableOtpAutoRead]);
     });
 
     test('OtplessSslPinning is exported from otpless_flutter.dart', () {

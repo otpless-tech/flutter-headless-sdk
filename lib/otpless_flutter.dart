@@ -2,7 +2,7 @@ import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/models.dart';
 
-export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning;
+export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning, OtplessConfigKey;
 
 class Otpless {
   final MethodChannelOtplessFlutter _otplessChannel =
@@ -35,15 +35,21 @@ class Otpless {
   /// [loginUri] is the deep-link URI the native SDK returns to after OAuth
   /// channels. Defaults to `null`, in which case the SDK derives
   /// `otpless.<appid>://otpless`.
+  ///
+  /// [config] carries optional SDK settings keyed by [OtplessConfigKey]. For
+  /// example, `{OtplessConfigKey.disableOtpAutoRead: "true"}` turns off OTP
+  /// auto-read on Android. Defaults to empty, which keeps native defaults.
   Future<void> initialize(
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) async {
     await _otplessChannel.initialize(
       appId,
       sslPinning: sslPinning,
       loginUri: loginUri,
+      config: config,
     );
   }
 

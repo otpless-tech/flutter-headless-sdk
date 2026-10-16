@@ -75,11 +75,15 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) async {
     await methodChannel.invokeMethod("initialize", {
       'appId': appId,
       'loginUri': loginUri,
       'sslPinning': sslPinning.name,
+      // Keys go by enum name ("disableOtpAutoRead"); the native side maps
+      // them onto its own OtplessConfigKey and drops anything it doesn't know.
+      'config': config.map((key, value) => MapEntry(key.name, value)),
       // Internal channel key, not merchant-facing API: there is no Dart
       // parameter for this. See [_buildPlatformToken].
       'buildPlatform': _buildPlatformToken(),

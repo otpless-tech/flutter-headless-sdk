@@ -41,6 +41,8 @@ class _MyAppState extends State<MyApp> {
   bool _simBindingEnabled = false;
   // SSL pinning is opt-in; leave off unless you are testing the 5004 path.
   bool _sslPinningEnabled = false;
+  // Android only: stops the SMS / WhatsApp OTP auto-read receivers.
+  bool _otpAutoReadDisabled = false;
 
   @override
   void initState() {
@@ -57,7 +59,20 @@ class _MyAppState extends State<MyApp> {
       sslPinning: _sslPinningEnabled
           ? OtplessSslPinning.enabled
           : OtplessSslPinning.disabled,
+      config: {
+        if (_otpAutoReadDisabled) OtplessConfigKey.disableOtpAutoRead: 'true',
+      },
     );
+  }
+
+  Future<void> toggleOtpAutoReadDisabled(bool disabled) async {
+    // Config is fixed at initialize time, so re-initialise the SDK.
+    setState(() => _otpAutoReadDisabled = disabled);
+    await initializeSdk();
+    setState(() {
+      _dataResponse =
+          "OTP auto-read ${disabled ? 'disabled' : 'enabled'} (SDK re-initialised)\n\n$_dataResponse";
+    });
   }
 
   Future<void> toggleSslPinning(bool enabled) async {
@@ -326,6 +341,17 @@ class _MyAppState extends State<MyApp> {
                       CupertinoSwitch(
                         value: _sslPinningEnabled,
                         onChanged: toggleSslPinning,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Disable OTP auto-read (Android)"),
+                      CupertinoSwitch(
+                        value: _otpAutoReadDisabled,
+                        onChanged: toggleOtpAutoReadDisabled,
                       ),
                     ],
                   ),

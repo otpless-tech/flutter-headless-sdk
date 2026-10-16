@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.otpless.longclaw.tc.OTScopeRequest
 import com.otpless.v2.android.sdk.dto.AuthEvent
+import com.otpless.v2.android.sdk.dto.OtplessConfigKey
 import com.otpless.v2.android.sdk.dto.OtplessResponse
 import com.otpless.v2.android.sdk.dto.OtplessSslKind
 import com.otpless.v2.android.sdk.dto.ProviderType
@@ -73,6 +74,20 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                     "enabled" -> OtplessSslKind.SslEnabled
                     else -> OtplessSslKind.SslDisabled
                 }
+                // Dart marshals OtplessConfigKey by enum name. Mapped explicitly
+                // (not valueOf) because the Dart and Kotlin casing differ;
+                // unknown keys and non-string values are dropped.
+                val config: Map<OtplessConfigKey, String> =
+                    call.argument<Map<String, Any?>>("config").orEmpty()
+                        .mapNotNull { (key, value) ->
+                            val configKey = when (key) {
+                                "disableOtpAutoRead" -> OtplessConfigKey.DisableOtpAutoRead
+                                else -> null
+                            }
+                            val stringValue = value as? String
+                            if (configKey != null && stringValue != null) configKey to stringValue else null
+                        }
+                        .toMap()
                 // Wrapper attribution, computed in Dart (which owns the single
                 // source of truth for the plugin version) and arriving as
                 // "flutter-android-<pluginVersion>". This bridge is a dumb
@@ -100,7 +115,8 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                         activity = mActivity,
                         loginUri = loginUri,
                         callback = this@OtplessFlutterHeadless::onOtplessResponseCallback,
-                        sslKind = sslKind
+                        sslKind = sslKind,
+                        config = config
                     )
                 }
             }
