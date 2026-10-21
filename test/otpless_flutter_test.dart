@@ -174,4 +174,46 @@ void main() {
       });
     });
   });
+
+  group('SIM binding monitor', () {
+    const channel = MethodChannel('otpless_headless_flutter');
+    final List<MethodCall> log = <MethodCall>[];
+
+    setUp(() {
+      log.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        log.add(call);
+        return true;
+      });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('SimBindingState is exported from otpless_flutter.dart', () {
+      expect(SimBindingState.values,
+          [SimBindingState.enabled, SimBindingState.disabled]);
+    });
+
+    // Host-only expectation: flutter test is neither Android nor iOS, so the
+    // Android-only guard short-circuits before reaching the channel.
+    test('is a no-op off Android', () async {
+      final otpless = Otpless();
+      expect(await otpless.registerSimBindingMonitor(), isFalse);
+      await otpless.setSimBindingMonitorCallback((_) {});
+      await otpless.unregisterSimBindingMonitor();
+      expect(log, isEmpty);
+    });
+
+    test('a native state event with no callback set does not throw', () async {
+      MethodChannelOtplessFlutter();
+      final message = const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('otpless_sim_binding_event', 'DISABLED'));
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(channel.name, message, (_) {});
+    });
+  });
 }

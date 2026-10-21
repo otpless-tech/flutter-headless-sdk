@@ -180,3 +180,11 @@ enum OtplessSslPinning { disabled, enabled }
 /// Values apply per `initialize` call: call `initialize` again to change them.
 /// Marshalled to the native side by enum name; unknown keys are ignored.
 enum OtplessConfigKey { disableOtpAutoRead }
+
+/// SIM binding state reported by the Android SIM binding monitor. See
+/// `Otpless.setSimBindingMonitorCallback`.
+///
+/// * [enabled] — a SIM binding was saved for this device.
+/// * [disabled] — the binding was cleared (via `clearSimBinding`, or because
+///   saving it failed), or the bound SIM was removed while monitoring.
+enum SimBindingState { enabled, disabled }

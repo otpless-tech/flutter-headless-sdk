@@ -166,6 +166,10 @@ public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
             result(nil)
         case "setSimBindingEnabled":
             result(nil)
+        case "registerSimBindingMonitor":
+            result(false)
+        case "unregisterSimBindingMonitor", "setSimBindingMonitorCallback":
+            result(nil)
         case "closeDialogIfOpen":
             result(nil)
         default:

@@ -1,13 +1,14 @@
 ## 3.2.0 (16th October 2026)
 ### Features
 - **Option to disable OTP auto-read (Android).** `initialize` takes a new optional `config: Map<OtplessConfigKey, String>` parameter, and `OtplessConfigKey` is exported from `otpless_flutter.dart`. Passing `{OtplessConfigKey.disableOtpAutoRead: "true"}` stops the Android SDK from registering the SMS / WhatsApp zero-tap OTP auto-read receivers for that `initialize` call. This is meant for SNA-only integrations. Auto-read stays on when the key is absent or its value is anything other than exactly `"true"`, so existing integrations are unchanged. iOS has no OTP auto-read and ignores the key.
+- **SIM binding monitor (Android).** New `registerSimBindingMonitor()`, `unregisterSimBindingMonitor()` and `setSimBindingMonitorCallback(callback)`, bridging the native SDK APIs of the same names. The callback receives a `SimBindingState` (exported from `otpless_flutter.dart`): `enabled` when a SIM binding is saved, `disabled` when the binding is cleared or the bound SIM is removed while the monitor is registered. Pass `null` to remove the callback. All three are no-ops on iOS (`registerSimBindingMonitor` returns `false`).
 
 ### Changes
 - Android: bump `otpless-headless-sdk` `2.0.1` → `2.3.0`. The native changes between those versions are additive (`removeDeviceBoundIdentity`, the SIM binding monitor, a backend-opt-in `INITIATE` callback before `ONETAP` on the SNA fast-path, a backend-opt-in Play Integrity wait, and the `config` parameter on `initialize`).
 - iOS: bump `OtplessBM` `3.0.1` → `3.0.2` in both the podspec (`OtplessBM/Core`) and `Package.swift`. 3.0.2 is a fix release (on-demand cellular refresh, proxy telemetry) with no public API change.
 - The wrapper-attribution token follows the bump: telemetry now reports `flutter-android-3.2.0` / `flutter-ios-3.2.0`.
 
-No breaking Dart API changes: `config` is optional and defaults to empty.
+No breaking Dart API changes: `config` is optional and defaults to empty, and the SIM binding monitor APIs are additive.
 
 ## 3.1.0 (5th October 2026)
 ### Features

@@ -143,6 +143,36 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  Future<void> clearSimBinding() async {
+    await _otplessHeadlessPlugin.clearSimBinding();
+    setState(() {
+      _dataResponse = "SIM binding cleared\n\n$_dataResponse";
+    });
+  }
+
+  // Android only: state changes arrive in the callback and are logged below.
+  Future<void> startSimBindingMonitor() async {
+    await _otplessHeadlessPlugin.setSimBindingMonitorCallback((state) {
+      setState(() {
+        _dataResponse = "SIM binding state: ${state.name}\n\n$_dataResponse";
+      });
+    });
+    final registered = await _otplessHeadlessPlugin.registerSimBindingMonitor();
+    setState(() {
+      isSimStateListenerAttached = registered;
+      _dataResponse = "SIM binding monitor registered: $registered\n\n$_dataResponse";
+    });
+  }
+
+  Future<void> stopSimBindingMonitor() async {
+    await _otplessHeadlessPlugin.unregisterSimBindingMonitor();
+    await _otplessHeadlessPlugin.setSimBindingMonitorCallback(null);
+    setState(() {
+      isSimStateListenerAttached = false;
+      _dataResponse = "SIM binding monitor unregistered\n\n$_dataResponse";
+    });
+  }
+
   Future<void> printActiveSession() async {
     final session = await _otplessHeadlessPlugin.getActiveSession();
     setState(() {
@@ -359,6 +389,20 @@ class _MyAppState extends State<MyApp> {
                   CupertinoButton.tinted(
                     onPressed: checkSimBinding,
                     child: const Text("Check SIM binding"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: clearSimBinding,
+                    child: const Text("Clear SIM binding"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: isSimStateListenerAttached
+                        ? stopSimBindingMonitor
+                        : startSimBindingMonitor,
+                    child: Text(isSimStateListenerAttached
+                        ? "Stop SIM binding monitor"
+                        : "Start SIM binding monitor (Android)"),
                   ),
                   const SizedBox(height: 16),
                   CupertinoButton.tinted(

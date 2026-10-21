@@ -10,6 +10,7 @@ import 'src/version.dart';
 
 typedef OtplessResultCallback = void Function(dynamic);
 typedef OtplessSimEventListener = void Function(List<Map<String, dynamic>>);
+typedef OtplessSimBindingMonitorCallback = void Function(SimBindingState);
 
 /// Wrapper-attribution token sent to the native SDKs at `initialize`.
 ///
@@ -39,6 +40,7 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
   final methodChannel = const MethodChannel('otpless_headless_flutter');
 
   OtplessResultCallback? _callback;
+  OtplessSimBindingMonitorCallback? _simBindingMonitorCallback;
 
   MethodChannelOtplessFlutter() {
     _setEventChannel();
@@ -52,6 +54,14 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
         // setResponseCallback is expected before initialize; the null-safe call
         // is just a guard so a stray event can never throw.
         _callback?.call(result);
+      } else if (call.method == "otpless_sim_binding_event") {
+        // Native sends the Kotlin enum name: "ENABLED" / "DISABLED".
+        const states = {
+          "ENABLED": SimBindingState.enabled,
+          "DISABLED": SimBindingState.disabled,
+        };
+        final state = states[call.arguments];
+        if (state != null) _simBindingMonitorCallback?.call(state);
       }
     });
   }
@@ -187,5 +197,24 @@ class MethodChannelOtplessFlutter extends OtplessFlutterPlatform {
     if (!Platform.isAndroid) return;
     await methodChannel
         .invokeMethod("setSimBindingEnabled", {'enabled': enabled});
+  }
+
+  Future<bool> registerSimBindingMonitor() async {
+    if (!Platform.isAndroid) return false;
+    final res = await methodChannel.invokeMethod("registerSimBindingMonitor");
+    return (res as bool?) ?? false;
+  }
+
+  Future<void> unregisterSimBindingMonitor() async {
+    if (!Platform.isAndroid) return;
+    await methodChannel.invokeMethod("unregisterSimBindingMonitor");
+  }
+
+  Future<void> setSimBindingMonitorCallback(
+      OtplessSimBindingMonitorCallback? callback) async {
+    if (!Platform.isAndroid) return;
+    _simBindingMonitorCallback = callback;
+    await methodChannel.invokeMethod(
+        "setSimBindingMonitorCallback", {'enabled': callback != null});
   }
 }

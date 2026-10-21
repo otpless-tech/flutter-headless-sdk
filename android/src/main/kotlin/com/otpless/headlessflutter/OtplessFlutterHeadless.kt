@@ -14,6 +14,7 @@ import com.otpless.v2.android.sdk.dto.ProviderType
 import com.otpless.v2.android.sdk.main.OtplessSDK
 import com.otpless.v2.android.sdk.session.OtplessSessionManager
 import com.otpless.v2.android.sdk.session.OtplessSessionState
+import com.otpless.v2.android.sdk.simbinding.SimBindingState
 import com.otpless.v2.android.sdk.utils.BuildPlatform
 import com.otpless.v2.android.sdk.utils.OtplessUtils
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -241,6 +242,29 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
                 result.success(null)
             }
 
+            "registerSimBindingMonitor" -> {
+                val registered = OtplessSDK.registerSimBindingMonitor(context)
+                debugLog("registerSimBindingMonitor: registered=$registered")
+                result.success(registered)
+            }
+
+            "unregisterSimBindingMonitor" -> {
+                OtplessSDK.unregisterSimBindingMonitor(context)
+                debugLog("unregisterSimBindingMonitor: unregistered")
+                result.success(null)
+            }
+
+            "setSimBindingMonitorCallback" -> {
+                // Dart keeps the actual callback; this only toggles whether
+                // native forwards SIM binding state changes over the channel.
+                val enabled = call.argument<Boolean>("enabled") ?: false
+                debugLog("setSimBindingMonitorCallback: ${if (enabled) "set" else "cleared"}")
+                OtplessSDK.setSimBindingMonitorCallback(
+                    if (enabled) this::onSimBindingStateChanged else null
+                )
+                result.success(null)
+            }
+
             "closeDialogIfOpen" -> {
                 OtplessSDK.closeDialogIfOpen()
                 result.success(null)
@@ -256,6 +280,13 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     private fun onOtplessResponseCallback(otplessResponse: OtplessResponse) {
         channel.invokeMethod("otpless_callback_event", convertHeadlessResponseToJson(otplessResponse).toString())
+    }
+
+    // The native monitor already delivers on the main thread, which the
+    // method channel requires. Sent as the enum name: "ENABLED" / "DISABLED".
+    private fun onSimBindingStateChanged(state: SimBindingState) {
+        debugLog("SIM binding state changed: ${state.name}")
+        channel.invokeMethod("otpless_sim_binding_event", state.name)
     }
 
     private fun start(json: JSONObject) {
@@ -293,6 +324,9 @@ class OtplessFlutterHeadless : FlutterPlugin, MethodCallHandler, ActivityAware, 
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        // The native listener is process-wide; drop it so it can't call into
+        // a channel whose engine is gone.
+        OtplessSDK.setSimBindingMonitorCallback(null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

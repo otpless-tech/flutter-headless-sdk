@@ -2,7 +2,7 @@ import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/models.dart';
 
-export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning, OtplessConfigKey;
+export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning, OtplessConfigKey, SimBindingState;
 
 class Otpless {
   final MethodChannelOtplessFlutter _otplessChannel =
@@ -121,5 +121,25 @@ class Otpless {
 
   Future<void> setSimBindingEnabled(bool enabled) async {
     return _otplessChannel.setSimBindingEnabled(enabled);
+  }
+
+  /// Starts watching for SIM changes so a removed bound SIM is reported to
+  /// the [setSimBindingMonitorCallback] callback. Returns `true` if the
+  /// monitor is registered. Android only; returns `false` on iOS.
+  Future<bool> registerSimBindingMonitor() async {
+    return _otplessChannel.registerSimBindingMonitor();
+  }
+
+  /// Stops the SIM change monitor started by [registerSimBindingMonitor].
+  /// Android only; no-op on iOS.
+  Future<void> unregisterSimBindingMonitor() async {
+    return _otplessChannel.unregisterSimBindingMonitor();
+  }
+
+  /// Sets the callback for SIM binding state changes, see [SimBindingState].
+  /// Pass `null` to remove it. Android only; no-op on iOS.
+  Future<void> setSimBindingMonitorCallback(
+      OtplessSimBindingMonitorCallback? callback) async {
+    return _otplessChannel.setSimBindingMonitorCallback(callback);
   }
 }

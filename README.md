@@ -71,6 +71,7 @@ Swift packages have no equivalent of a CocoaPods subspec. Under SPM the plugin d
 | `isWhatsAppInstalledForAndroid` | ✅ | ❌ returns `false` |
 | `initTrueCaller` | ✅ | ❌ returns `false` (no iOS Truecaller SDK) |
 | `checkSimBindingStatus` / `clearSimBinding` / `setSimBindingEnabled` | ✅ | ❌ (no SDK equivalent) |
+| `registerSimBindingMonitor` / `unregisterSimBindingMonitor` / `setSimBindingMonitorCallback` (3.2.0+) | ✅ | ❌ (no SDK equivalent) |
 | `closeDialogIfOpen` | ✅ | ❌ (no SDK equivalent) |
 | Deep-link handling / Passkey / Facebook SDK register | via manifest / no-op | client wires up in `AppDelegate` / `SceneDelegate` (see below) |
 
