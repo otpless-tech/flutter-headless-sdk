@@ -167,3 +167,24 @@ enum DeviceFingerprintMode { none, async, sync }
 /// Marshalled to the native side as the string `"enabled"` / `"disabled"`;
 /// unknown values are treated as disabled.
 enum OtplessSslPinning { disabled, enabled }
+
+/// Keys accepted by the `config` map of [Otpless.initialize]. Mirrors the
+/// native Android `OtplessConfigKey`.
+///
+/// - [disableOtpAutoRead]: set to `"true"` to stop the SDK from registering
+///   the SMS / WhatsApp zero-tap OTP auto-read receivers (intended for
+///   SNA-only integrations). Auto-read stays on when the key is absent or its
+///   value is anything other than exactly `"true"`. Android only; iOS has no
+///   OTP auto-read and ignores it.
+///
+/// Values apply per `initialize` call: call `initialize` again to change them.
+/// Marshalled to the native side by enum name; unknown keys are ignored.
+enum OtplessConfigKey { disableOtpAutoRead }
+
+/// SIM binding state reported by the Android SIM binding monitor. See
+/// `Otpless.setSimBindingMonitorCallback`.
+///
+/// * [enabled] — a SIM binding was saved for this device.
+/// * [disabled] — the binding was cleared (via `clearSimBinding`, or because
+///   saving it failed), or the bound SIM was removed while monitoring.
+enum SimBindingState { enabled, disabled }

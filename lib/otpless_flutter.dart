@@ -2,7 +2,7 @@ import 'otpless_flutter_platform_interface.dart';
 import 'package:otpless_headless_flutter/otpless_flutter_method_channel.dart';
 import 'package:otpless_headless_flutter/models.dart';
 
-export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning;
+export 'package:otpless_headless_flutter/models.dart' show OtplessSslPinning, OtplessConfigKey, SimBindingState;
 
 class Otpless {
   final MethodChannelOtplessFlutter _otplessChannel =
@@ -35,15 +35,21 @@ class Otpless {
   /// [loginUri] is the deep-link URI the native SDK returns to after OAuth
   /// channels. Defaults to `null`, in which case the SDK derives
   /// `otpless.<appid>://otpless`.
+  ///
+  /// [config] carries optional SDK settings keyed by [OtplessConfigKey]. For
+  /// example, `{OtplessConfigKey.disableOtpAutoRead: "true"}` turns off OTP
+  /// auto-read on Android. Defaults to empty, which keeps native defaults.
   Future<void> initialize(
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) async {
     await _otplessChannel.initialize(
       appId,
       sslPinning: sslPinning,
       loginUri: loginUri,
+      config: config,
     );
   }
 
@@ -115,5 +121,25 @@ class Otpless {
 
   Future<void> setSimBindingEnabled(bool enabled) async {
     return _otplessChannel.setSimBindingEnabled(enabled);
+  }
+
+  /// Starts watching for SIM changes so a removed bound SIM is reported to
+  /// the [setSimBindingMonitorCallback] callback. Returns `true` if the
+  /// monitor is registered. Android only; returns `false` on iOS.
+  Future<bool> registerSimBindingMonitor() async {
+    return _otplessChannel.registerSimBindingMonitor();
+  }
+
+  /// Stops the SIM change monitor started by [registerSimBindingMonitor].
+  /// Android only; no-op on iOS.
+  Future<void> unregisterSimBindingMonitor() async {
+    return _otplessChannel.unregisterSimBindingMonitor();
+  }
+
+  /// Sets the callback for SIM binding state changes, see [SimBindingState].
+  /// Pass `null` to remove it. Android only; no-op on iOS.
+  Future<void> setSimBindingMonitorCallback(
+      OtplessSimBindingMonitorCallback? callback) async {
+    return _otplessChannel.setSimBindingMonitorCallback(callback);
   }
 }

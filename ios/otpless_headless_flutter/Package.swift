@@ -34,7 +34,7 @@ let package = Package(
         // product, so there is nothing narrower to depend on here.
         .package(
             url: "https://github.com/otpless-tech/otpless-headless-iOS-sdk.git",
-            exact: "3.0.1"
+            exact: "3.0.2"
         ),
     ],
     targets: [

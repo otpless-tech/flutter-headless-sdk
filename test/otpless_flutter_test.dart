@@ -17,6 +17,7 @@ class MockOtplessFlutterPlatform
     String appId, {
     OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
     String? loginUri,
+    Map<OtplessConfigKey, String> config = const {},
   }) async {}
 }
 
@@ -71,6 +72,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -84,6 +86,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'enabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -96,6 +99,7 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': null,
         'sslPinning': 'disabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
     });
@@ -111,8 +115,28 @@ void main() {
         'appId': 'APP_ID',
         'loginUri': 'myapp://otpless',
         'sslPinning': 'enabled',
+        'config': <String, String>{},
         'buildPlatform': hostBuildPlatform,
       });
+    });
+
+    test('config: disableOtpAutoRead marshals by enum name', () async {
+      await Otpless().initialize(
+        'APP_ID',
+        config: {OtplessConfigKey.disableOtpAutoRead: 'true'},
+      );
+
+      expect(log.single.arguments, <String, dynamic>{
+        'appId': 'APP_ID',
+        'loginUri': null,
+        'sslPinning': 'disabled',
+        'config': <String, String>{'disableOtpAutoRead': 'true'},
+        'buildPlatform': hostBuildPlatform,
+      });
+    });
+
+    test('OtplessConfigKey is exported from otpless_flutter.dart', () {
+      expect(OtplessConfigKey.values, [OtplessConfigKey.disableOtpAutoRead]);
     });
 
     test('OtplessSslPinning is exported from otpless_flutter.dart', () {
@@ -148,6 +172,48 @@ void main() {
         // Host-only expectation: flutter test is neither Android nor iOS.
         expect(token, 'flutter-$otplessPluginVersion');
       });
+    });
+  });
+
+  group('SIM binding monitor', () {
+    const channel = MethodChannel('otpless_headless_flutter');
+    final List<MethodCall> log = <MethodCall>[];
+
+    setUp(() {
+      log.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (MethodCall call) async {
+        log.add(call);
+        return true;
+      });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('SimBindingState is exported from otpless_flutter.dart', () {
+      expect(SimBindingState.values,
+          [SimBindingState.enabled, SimBindingState.disabled]);
+    });
+
+    // Host-only expectation: flutter test is neither Android nor iOS, so the
+    // Android-only guard short-circuits before reaching the channel.
+    test('is a no-op off Android', () async {
+      final otpless = Otpless();
+      expect(await otpless.registerSimBindingMonitor(), isFalse);
+      await otpless.setSimBindingMonitorCallback((_) {});
+      await otpless.unregisterSimBindingMonitor();
+      expect(log, isEmpty);
+    });
+
+    test('a native state event with no callback set does not throw', () async {
+      MethodChannelOtplessFlutter();
+      final message = const StandardMethodCodec().encodeMethodCall(
+          const MethodCall('otpless_sim_binding_event', 'DISABLED'));
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(channel.name, message, (_) {});
     });
   });
 }

@@ -24,13 +24,14 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 2.0.1`, `OtplessBM/Core 3.0.1` as of plugin 3.1.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.3.0`, `OtplessBM/Core 3.0.2` as of plugin 3.2.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
 - **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
 - **iOS**: deployment target **13.0+** (unchanged). Both CocoaPods and Swift Package Manager are supported from plugin 3.1.0 — see [iOS dependency managers](#ios-dependency-managers-cocoapods-and-swift-package-manager). On CocoaPods, if you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
 
 | Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
 |---|---|---|
+| 3.2.0 | 2.3.0 | 3.0.2 |
 | 3.1.0 | 2.0.1 | 3.0.1 |
 | 3.0.1 | 2.0.1 | 3.0.1 |
 | 3.0.0 | 2.0.1 | 3.0.0 |
@@ -56,6 +57,7 @@ Swift packages have no equivalent of a CocoaPods subspec. Under SPM the plugin d
 | Dart method | Android | iOS |
 |---|:---:|:---:|
 | `initialize` (`sslPinning`, `loginUri` — new in 2.1) | ✅ | ✅ |
+| `initialize` `config: {OtplessConfigKey.disableOtpAutoRead: …}` (3.2.0+) | ✅ | ➖ (ignored; iOS has no OTP auto-read) |
 | `setResponseCallback` | ✅ | ✅ |
 | `setDevLogging` | ✅ | ✅ |
 | `start` | ✅ | ✅ |
@@ -69,6 +71,7 @@ Swift packages have no equivalent of a CocoaPods subspec. Under SPM the plugin d
 | `isWhatsAppInstalledForAndroid` | ✅ | ❌ returns `false` |
 | `initTrueCaller` | ✅ | ❌ returns `false` (no iOS Truecaller SDK) |
 | `checkSimBindingStatus` / `clearSimBinding` / `setSimBindingEnabled` | ✅ | ❌ (no SDK equivalent) |
+| `registerSimBindingMonitor` / `unregisterSimBindingMonitor` / `setSimBindingMonitorCallback` (3.2.0+) | ✅ | ❌ (no SDK equivalent) |
 | `closeDialogIfOpen` | ✅ | ❌ (no SDK equivalent) |
 | Deep-link handling / Passkey / Facebook SDK register | via manifest / no-op | client wires up in `AppDelegate` / `SceneDelegate` (see below) |
 
@@ -100,6 +103,7 @@ Future<void> initialize(
   String appId, {
   OtplessSslPinning sslPinning = OtplessSslPinning.disabled,
   String? loginUri,
+  Map<OtplessConfigKey, String> config = const {}, // 3.2.0+
 });
 ```
 
@@ -107,6 +111,20 @@ Future<void> initialize(
 |---|---|---|
 | `sslPinning` | `OtplessSslPinning.disabled` | Opt-in SSL certificate pinning of the OTPLESS backend on both platforms. See [SSL pinning](#ssl-pinning). |
 | `loginUri` | `null` (SDK derives `otpless.<appid>://otpless`) | Deep-link URI the SDK returns to after OAuth channels. Forwarded to both native SDKs. |
+| `config` | `{}` (native defaults) | Optional SDK settings keyed by `OtplessConfigKey`. See [Disabling OTP auto-read](#disabling-otp-auto-read-android-320). |
+
+### Disabling OTP auto-read (Android, 3.2.0+)
+
+By default the Android SDK registers SMS and WhatsApp zero-tap receivers to auto-read OTPs. Integrations that only use SNA (silent network auth) can turn this off:
+
+```dart
+_otplessHeadlessPlugin.initialize(
+  "YOUR_APP_ID",
+  config: {OtplessConfigKey.disableOtpAutoRead: "true"},
+);
+```
+
+Auto-read stays on when the key is absent or its value is anything other than exactly `"true"`. The setting applies per `initialize` call, so call `initialize` again to change it. iOS ignores this key.
 
 ## SSL pinning
 

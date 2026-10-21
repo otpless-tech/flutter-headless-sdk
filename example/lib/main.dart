@@ -41,6 +41,8 @@ class _MyAppState extends State<MyApp> {
   bool _simBindingEnabled = false;
   // SSL pinning is opt-in; leave off unless you are testing the 5004 path.
   bool _sslPinningEnabled = false;
+  // Android only: stops the SMS / WhatsApp OTP auto-read receivers.
+  bool _otpAutoReadDisabled = false;
 
   @override
   void initState() {
@@ -57,7 +59,20 @@ class _MyAppState extends State<MyApp> {
       sslPinning: _sslPinningEnabled
           ? OtplessSslPinning.enabled
           : OtplessSslPinning.disabled,
+      config: {
+        if (_otpAutoReadDisabled) OtplessConfigKey.disableOtpAutoRead: 'true',
+      },
     );
+  }
+
+  Future<void> toggleOtpAutoReadDisabled(bool disabled) async {
+    // Config is fixed at initialize time, so re-initialise the SDK.
+    setState(() => _otpAutoReadDisabled = disabled);
+    await initializeSdk();
+    setState(() {
+      _dataResponse =
+          "OTP auto-read ${disabled ? 'disabled' : 'enabled'} (SDK re-initialised)\n\n$_dataResponse";
+    });
   }
 
   Future<void> toggleSslPinning(bool enabled) async {
@@ -125,6 +140,36 @@ class _MyAppState extends State<MyApp> {
     final status = await _otplessHeadlessPlugin.checkSimBindingStatus();
     setState(() {
       _dataResponse = "SIM binding: $status\n\n$_dataResponse";
+    });
+  }
+
+  Future<void> clearSimBinding() async {
+    await _otplessHeadlessPlugin.clearSimBinding();
+    setState(() {
+      _dataResponse = "SIM binding cleared\n\n$_dataResponse";
+    });
+  }
+
+  // Android only: state changes arrive in the callback and are logged below.
+  Future<void> startSimBindingMonitor() async {
+    await _otplessHeadlessPlugin.setSimBindingMonitorCallback((state) {
+      setState(() {
+        _dataResponse = "SIM binding state: ${state.name}\n\n$_dataResponse";
+      });
+    });
+    final registered = await _otplessHeadlessPlugin.registerSimBindingMonitor();
+    setState(() {
+      isSimStateListenerAttached = registered;
+      _dataResponse = "SIM binding monitor registered: $registered\n\n$_dataResponse";
+    });
+  }
+
+  Future<void> stopSimBindingMonitor() async {
+    await _otplessHeadlessPlugin.unregisterSimBindingMonitor();
+    await _otplessHeadlessPlugin.setSimBindingMonitorCallback(null);
+    setState(() {
+      isSimStateListenerAttached = false;
+      _dataResponse = "SIM binding monitor unregistered\n\n$_dataResponse";
     });
   }
 
@@ -330,9 +375,34 @@ class _MyAppState extends State<MyApp> {
                     ],
                   ),
                   const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text("Disable OTP auto-read (Android)"),
+                      CupertinoSwitch(
+                        value: _otpAutoReadDisabled,
+                        onChanged: toggleOtpAutoReadDisabled,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   CupertinoButton.tinted(
                     onPressed: checkSimBinding,
                     child: const Text("Check SIM binding"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: clearSimBinding,
+                    child: const Text("Clear SIM binding"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: isSimStateListenerAttached
+                        ? stopSimBindingMonitor
+                        : startSimBindingMonitor,
+                    child: Text(isSimStateListenerAttached
+                        ? "Stop SIM binding monitor"
+                        : "Start SIM binding monitor (Android)"),
                   ),
                   const SizedBox(height: 16),
                   CupertinoButton.tinted(
