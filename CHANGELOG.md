@@ -1,3 +1,17 @@
+## 3.3.0 (18th November 2026)
+### Changes
+- Android: bump `otpless-headless-sdk` `2.3.0` → `2.4.0`. No public API change; the bridge compiles as-is. What changes for your app:
+  - **Play Integrity:** setup now runs in the background, so `SDK_READY` no longer waits for it. An expired token provider (`INTEGRITY_TOKEN_PROVIDER_INVALID`) or a dead Play Store integrity service is recovered with one retry. When Play Integrity is not mandatory for your app, the SDK now waits up to **5 seconds** (was 2) for the token before sending the intent, so the intent call can take up to 3 s longer when the token is slow.
+  - **Initialization:** fixes an ANR and a `NullPointerException` (when `cleanup()` runs during `initialize`). Merchant config now recovers from error `7005` (stale state). If `initialize` fails before the SDK can report its result, your response callback now receives `FAILED` / `5003` instead of nothing or a crash.
+  - **Google / Facebook SDK sign-in:** all sign-in parameters on the intent URI are now read, and `permissions` is passed through.
+- iOS: bump `OtplessBM` `3.0.2` → `3.1.1` in both the podspec (`OtplessBM/Core`) and `Package.swift`. No public API change. What changes for your app:
+  - **App Attest (iOS 14+, 3.1.0):** when OTPLESS enables it for your app through the merchant config, the SDK registers an App Attest key in the background after `SDK_READY` and attaches an assertion to the intent request. It never delays or fails an authentication. For App Store / TestFlight builds, add the `com.apple.developer.devicecheck.appattest-environment` entitlement set to `production`; without it Apple issues development keys.
+  - **State refresh (3.1.0):** error `7005` on the intent or merchant config call now refreshes the state and retries once, and stale Keychain state left by a previous install is cleared on first launch.
+  - **Request id flow (3.1.1):** a request built from a backend `requestId` now works without a phone or email and no longer defaults to the phone channel.
+- The wrapper-attribution token follows the bump: telemetry now reports `flutter-android-3.3.0` / `flutter-ios-3.3.0`.
+
+No Dart API changes.
+
 ## 3.2.0 (16th October 2026)
 ### Features
 - **Option to disable OTP auto-read (Android).** `initialize` takes a new optional `config: Map<OtplessConfigKey, String>` parameter, and `OtplessConfigKey` is exported from `otpless_flutter.dart`. Passing `{OtplessConfigKey.disableOtpAutoRead: "true"}` stops the Android SDK from registering the SMS / WhatsApp zero-tap OTP auto-read receivers for that `initialize` call. This is meant for SNA-only integrations. Auto-read stays on when the key is absent or its value is anything other than exactly `"true"`, so existing integrations are unchanged. iOS has no OTP auto-read and ignores the key.
