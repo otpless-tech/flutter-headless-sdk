@@ -24,13 +24,14 @@ flutter pub get
 
 ## Toolchain requirements (2.0.0+)
 
-The underlying native SDKs (`otpless-headless-sdk 2.3.0`, `OtplessBM/Core 3.0.2` as of plugin 3.2.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
+The underlying native SDKs (`otpless-headless-sdk 2.4.0`, `OtplessBM/Core 3.1.1` as of plugin 3.3.0) pull in transitive dependencies that require newer toolchains than the pre-2.0 releases needed:
 
 - **Android**: Android Gradle Plugin **8.9.1+** and `compileSdkVersion` **36+**. The Android SDK transitively depends on `androidx.core:core:1.18.0`, which enforces this minimum. Update `android/settings.gradle` and `android/app/build.gradle` in your consuming app accordingly.
 - **iOS**: deployment target **13.0+** (unchanged). Both CocoaPods and Swift Package Manager are supported from plugin 3.1.0 — see [iOS dependency managers](#ios-dependency-managers-cocoapods-and-swift-package-manager). On CocoaPods, if you use `OtplessChannelType.GOOGLE_SDK` or `FACEBOOK_SDK`, add the matching subspec (`OtplessBM/GoogleSupport`, `OtplessBM/FacebookSupport`) to your `ios/Podfile`.
 
 | Plugin | Android `otpless-headless-sdk` | iOS `OtplessBM/Core` |
 |---|---|---|
+| 3.3.0 | 2.4.0 | 3.1.1 |
 | 3.2.0 | 2.3.0 | 3.0.2 |
 | 3.1.0 | 2.0.1 | 3.0.1 |
 | 3.0.1 | 2.0.1 | 3.0.1 |
@@ -149,7 +150,10 @@ With pinning enabled the native SDKs (Android `otpless-headless-sdk 2.0.1`, iOS 
 
 Common causes are a debugging proxy (Charles, Proxyman, mitmproxy) or a corporate TLS-inspecting gateway. Do not enable pinning in builds you intend to inspect with a proxy. Pinning cannot be toggled without calling `initialize` again.
 
-Google Play Integrity (Android) needs no plugin configuration: it is internal to `otpless-headless-sdk 2.0.1` and activates with the dependency bump. Your app must be distributed through Google Play and linked to a Play Console project for attestation to succeed; iOS has no equivalent.
+Device integrity attestation needs no plugin API on either platform:
+
+- **Android — Google Play Integrity.** Internal to `otpless-headless-sdk` (2.0.1+). Your app must be distributed through Google Play and linked to a Play Console project for attestation to succeed. Since plugin 3.3.0 (`otpless-headless-sdk 2.4.0`), setup no longer delays `initialize`, and when Play Integrity is not mandatory for your app the SDK waits up to 5 seconds (was 2) for the token before sending the intent.
+- **iOS — Apple App Attest (iOS 14+).** Internal to `OtplessBM` (3.1.0+, plugin 3.3.0+) and switched on per app by OTPLESS through the merchant config. It runs in the background after `SDK_READY` and never delays or fails an authentication. Without any entitlement Apple issues development keys; for App Store / TestFlight builds add the `com.apple.developer.devicecheck.appattest-environment` entitlement with the value `production` to your app's `Runner.entitlements`. The simulator and unsupported devices are skipped.
 
 # Initiate Authentication
 ## Phone Auth
