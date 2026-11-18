@@ -1,2 +1,8 @@
 docs
 doc
+build/
+.dart_tool/
+example/build/
+example/.dart_tool/
+example/ios/Pods/
+example/ios/Flutter/ephemeral/
