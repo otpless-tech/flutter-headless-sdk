@@ -6,14 +6,22 @@ import OtplessBM
 public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
     
     private var otplessTask: Task<Void, Never>? = nil
-    
+
+    // Each plugin instance is bound to one Flutter engine and must call back
+    // through that engine's own channel. A process-wide channel gets
+    // overwritten when an app spins up a second engine, and responses then
+    // land on an engine with no Dart handler ("method not implemented").
+    private let methodChannel: FlutterMethodChannel
+
+    init(methodChannel: FlutterMethodChannel) {
+        self.methodChannel = methodChannel
+        super.init()
+    }
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "otpless_headless_flutter", binaryMessenger: registrar.messenger())
-        let instance = OtplessFlutterHeadless()
+        let instance = OtplessFlutterHeadless(methodChannel: channel)
         registrar.addMethodCallDelegate(instance, channel: channel)
-        Task { @MainActor in
-            ChannelManager.shared.setMethodChannel(channel)
-        }
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -31,6 +39,9 @@ public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
             let jsonString = args["arg"] as! String
             let data = jsonString.data(using: .utf8)!
             let arguments = (try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]) ?? [:]
+            // Otpless.shared holds a single delegate; rebind so the engine that
+            // started this request is the one that gets its response.
+            Otpless.shared.setResponseDelegate(self)
             start(withDict: arguments)
             result(nil)
         case "initialize":
@@ -127,6 +138,7 @@ public class OtplessFlutterHeadless: NSObject, FlutterPlugin {
             let otp = dict["otp"] as? String
             let tid = dict["tid"] as? String
             let config = OtplessAuthCofig(isForeground: isForeground, otp: otp, tid: tid)
+            Otpless.shared.setResponseDelegate(self)
             Task { @MainActor in
                 let ok = await Otpless.shared.startAuth(parent: rootVC, config: config)
                 DispatchQueue.main.async { result(ok) }
@@ -301,7 +313,10 @@ extension OtplessFlutterHeadless: OtplessResponseDelegate {
             print("Failed to parse JSON data")
             return
         }
-        ChannelManager.shared.invokeMethod(method: "otpless_callback_event", arguments: String(data: jsonData, encoding: .utf8))
+        let json = String(data: jsonData, encoding: .utf8)
+        DispatchQueue.main.async {
+            self.methodChannel.invokeMethod("otpless_callback_event", arguments: json)
+        }
     }
 }
 
@@ -310,22 +325,4 @@ extension OtplessFlutterHeadless: OtplessLoggerDelegate {
         print("Otpless Log of type : \(type)\n\n\(message)")
     }
 }
-
-@MainActor
-class ChannelManager {
-    static let shared = ChannelManager()
-    
-    private var methodChannel: FlutterMethodChannel?
-    
-    private init() {}
-    
-    func setMethodChannel(_ channel: FlutterMethodChannel) {
-        methodChannel = channel
-    }
-    
-    func invokeMethod(method: String, arguments: Any?) {
-        methodChannel?.invokeMethod(method, arguments: arguments)
-    }
-}
-
 

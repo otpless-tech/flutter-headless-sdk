@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:otpless_headless_flutter/models.dart';
 import 'dart:async';
 
@@ -10,6 +11,14 @@ import 'package:otpless_headless_flutter/otpless_flutter.dart';
 void main() {
   runApp(const MyApp());
 }
+
+// Entrypoint for the extra engines spawned by the "Spawn 2nd engine" button.
+// Deliberately empty: the engine registers the OTPLESS plugin natively but
+// never sets a Dart callback handler, like a host app's background engine.
+@pragma('vm:entry-point')
+void secondaryEngineMain() {}
+
+const _debugChannel = MethodChannel('otpless_example/debug');
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -170,6 +179,16 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       isSimStateListenerAttached = false;
       _dataResponse = "SIM binding monitor unregistered\n\n$_dataResponse";
+    });
+  }
+
+  // Spawns another engine, which re-registers the plugin. A Start / OneTap
+  // afterwards must still deliver its response to this engine.
+  Future<void> spawnSecondaryEngine() async {
+    final count = await _debugChannel.invokeMethod<int>('spawnSecondaryEngine');
+    setState(() {
+      _dataResponse =
+          "Secondary engines spawned: $count (plugin re-registered)\n\n$_dataResponse";
     });
   }
 
@@ -408,6 +427,11 @@ class _MyAppState extends State<MyApp> {
                   CupertinoButton.tinted(
                     onPressed: printActiveSession,
                     child: const Text("Active session"),
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton.tinted(
+                    onPressed: spawnSecondaryEngine,
+                    child: const Text("Spawn 2nd engine (re-register plugin)"),
                   ),
                   const SizedBox(height: 16),
                   // response view

@@ -20,8 +20,8 @@ class Otpless {
     start headless
   */
   Future<void> start(
-      OtplessResultCallback callback, Map<String, dynamic> jsonObject) async {
-    _otplessChannel.start(callback, jsonObject);
+      OtplessResultCallback callback, Map<String, dynamic> jsonObject) {
+    return _otplessChannel.start(callback, jsonObject);
   }
 
   /// Initialises the native OTPLESS SDK for [appId].
@@ -53,12 +53,12 @@ class Otpless {
     );
   }
 
-  Future<void> setResponseCallback(OtplessResultCallback callback) async {
-    _otplessChannel.setResponseCallback(callback);
+  Future<void> setResponseCallback(OtplessResultCallback callback) {
+    return _otplessChannel.setResponseCallback(callback);
   }
 
-  Future<void> setDevLogging(bool isEnabled) async {
-    _otplessChannel.setDevLogging(isEnabled);
+  Future<void> setDevLogging(bool isEnabled) {
+    return _otplessChannel.setDevLogging(isEnabled);
   }
 
   Future<void> commitResponse(final dynamic response) async {
