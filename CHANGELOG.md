@@ -1,3 +1,14 @@
+## 3.3.1 (27th November 2026)
+### Fixes
+- **iOS: response callbacks lost in apps with more than one Flutter engine.** The plugin kept its method channel in a process-wide singleton, so every engine that registered the plugin (for example a background or add-to-app engine) replaced it. SDK responses such as `ONETAP` were then sent to the last engine to register, which has no OTPLESS callback handler, and were dropped with "method not implemented", even though authentication had succeeded natively. Each plugin instance now sends responses through its own engine's channel, and `start` / `startOnetap` rebind the native response delegate, so responses go to the engine that started the request. Android was not affected.
+- **Dart: `start`, `setResponseCallback` and `setDevLogging` now complete when the native call does.** Before, they returned immediately without waiting for the platform call, so awaiting them did not guarantee the call had reached the native side, and native errors could not be caught. The method signatures are unchanged.
+
+### Changes
+- The wrapper-attribution token follows the bump: telemetry now reports `flutter-android-3.3.1` / `flutter-ios-3.3.1`.
+- Example app: new "Spawn 2nd engine (re-register plugin)" button (iOS and Android) that registers the plugin on an extra headless engine, to reproduce the multi-engine setup.
+
+No Dart API changes. Native SDK versions are unchanged (`otpless-headless-sdk 2.4.0`, `OtplessBM 3.1.1`).
+
 ## 3.3.0 (18th November 2026)
 ### Changes
 - Android: bump `otpless-headless-sdk` `2.3.0` → `2.4.0`. No public API change; the bridge compiles as-is. What changes for your app:
